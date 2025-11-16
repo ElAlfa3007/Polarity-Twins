@@ -180,7 +180,7 @@ export class Player extends Entity {
             return;
         }
         
-        // Verificar si hay pared a la izquierda o derecha
+        // Verificar si hay pared a la izquierda o derecha (solo paredes verticales)
         const checkLeft = { ...this, x: this.x - 2 };
         const checkRight = { ...this, x: this.x + 2 };
         
@@ -188,11 +188,26 @@ export class Player extends Entity {
         let touchingRightWall = false;
         
         for (let solid of level.solids) {
-            if (Physics.checkCollision(checkLeft, solid)) {
-                touchingLeftWall = true;
-            }
-            if (Physics.checkCollision(checkRight, solid)) {
-                touchingRightWall = true;
+            // Solo considerar paredes verticales (el jugador debe estar a los lados, no arriba/abajo)
+            const solidCenterY = solid.y + solid.h / 2;
+            const playerCenterY = this.y + this.h / 2;
+            
+            // Verificar que el jugador esté aproximadamente a la misma altura (no en techo/suelo)
+            const verticalOverlap = Math.abs(solidCenterY - playerCenterY) < (solid.h / 2 + this.h / 2) * 0.8;
+            
+            if (verticalOverlap) {
+                if (Physics.checkCollision(checkLeft, solid)) {
+                    // Verificar que es una pared vertical (jugador está a la derecha del sólido)
+                    if (this.x >= solid.x + solid.w - 5) {
+                        touchingLeftWall = true;
+                    }
+                }
+                if (Physics.checkCollision(checkRight, solid)) {
+                    // Verificar que es una pared vertical (jugador está a la izquierda del sólido)
+                    if (this.x + this.w <= solid.x + 5) {
+                        touchingRightWall = true;
+                    }
+                }
             }
         }
         

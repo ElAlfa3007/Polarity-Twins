@@ -22,6 +22,7 @@ const ASSET_LIST = [
     { type: "image", name: "red7", src: "assets/imagen/red7.png" },
     { type: "image", name: "red8", src: "assets/imagen/red8.png" },
     { type: "image", name: "red9", src: "assets/imagen/red9.png" },
+    { type: "image", name: "red10", src: "assets/imagen/red10.png" },
     
     // Hang animations (1-4)
     { type: "image", name: "hang1", src: "assets/imagen/hang1.png" },
@@ -64,9 +65,13 @@ const ASSET_LIST = [
     // Victory
     { type: "image", name: "Dorado", src: "assets/imagen/star.png" },
 
+    // Rock
+    { type: "image", name: "Rock", src: "assets/imagen/roca.png" },
+
     // Audio
     { type: "audio", name: "MenuMusic", src: "./assets/sonido/Grimes  Genesis.mp3" },
-    { type: "audio", name: "Music1", src: "./assets/sonido/music1.mp3" },
+    { type: "audio", name: "Music1", src: "./assets/sonido/Fly.mp3" },
+    { type: "audio", name: "Finish", src: "./assets/sonido/LegacyKiller.mp3" },
 ];
 
 // Gestor de recursos (imágenes, audio, etc.)

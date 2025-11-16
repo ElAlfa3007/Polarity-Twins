@@ -701,7 +701,13 @@ function handleGameOverAction(action) {
 }
 
 // INPUT: Teclado
+// INPUT: Teclado
 document.addEventListener("keydown", e => {
+  // Sistema de código secreto
+  if (e.key.length === 1 && /[a-z]/i.test(e.key)) {
+    checkSecretCode(e.key);
+  }
+  
   if (e.key === "Enter" && gameState.state === "menu") {
     handleMenuAction("start");
   }
@@ -739,6 +745,75 @@ window.game = {
     }
   }
 };
+
+let secretCode = "";
+let secretCodeTarget = "nine";
+let riddleActive = false;
+
+function checkSecretCode(key) {
+  if (gameState.state !== "menu") return;
+  
+  secretCode += key.toLowerCase();
+  
+  // Mantener solo los últimos 4 caracteres
+  if (secretCode.length > 4) {
+    secretCode = secretCode.slice(-4);
+  }
+  
+  // Verificar si escribió "nine"
+  if (secretCode === secretCodeTarget && !riddleActive) {
+    riddleActive = true;
+    showRiddlePrompt();
+  }
+}
+
+function showRiddlePrompt() {
+  const riddle = `🔮 ACERTIJO SECRETO 🔮
+
+"Por la noche me usan para iluminar,
+y por el día me suelen apagar.
+En un pastel me pueden encontrar,
+y también en el mar me puedo navegar."
+
+¿Cuál es la respuesta?`;
+  
+  const answer = prompt(riddle);
+  
+  if (answer && answer.toLowerCase().trim() === "vela") {
+    console.log("✨ ¡Código secreto correcto! Accediendo al nivel secreto...");
+    loadSecretLevel();
+  } else {
+    alert("❌ Respuesta incorrecta. Intenta de nuevo...");
+    riddleActive = false;
+    secretCode = "";
+  }
+}
+
+function loadSecretLevel() {
+  // Detener música del menú
+  if (menuMusic) menuMusic.pause();
+  
+  // Destruir nivel anterior si existe
+  if (currentLevel) {
+    if (currentLevel.stopMusic) currentLevel.stopMusic();
+    if (currentLevel.destroy) currentLevel.destroy();
+  }
+  
+  // Importar y cargar el nivel secreto
+  import('./game/puzzle/secret.js')
+    .then(module => {
+      currentLevel = new module.LevelSecret();
+      gameState.change("game");
+      riddleActive = false;
+      secretCode = "";
+    })
+    .catch(err => {
+      console.error("Error cargando nivel secreto:", err);
+      alert("Error al cargar el nivel secreto");
+      riddleActive = false;
+      secretCode = "";
+    });
+}
 
 // Iniciar
 init();

@@ -7,6 +7,7 @@ export class Wall extends Entity {
         this.isActive = true;
         this.alpha = 1.0;
         this.deactivating = false;
+        this.tileSize = 40; // Tamaño de cada tile de textura
     }
 
     deactivate() {
@@ -26,22 +27,45 @@ export class Wall extends Entity {
     draw(ctx) {
         if (this.alpha <= 0) return;
         
-        const wallTexture = Loader.get("Pared");
+        const metalTexture = Loader.get("Metal");
         ctx.save();
         ctx.globalAlpha = this.alpha;
         
-        if (wallTexture && wallTexture.complete) {
-            for (let y = 0; y < this.h; y += 40) {
-                for (let x = 0; x < this.w; x += 40) {
-                    ctx.drawImage(wallTexture, this.x + x, this.y + y, 
-                                Math.min(40, this.w - x), Math.min(40, this.h - y));
+        if (metalTexture && metalTexture.complete) {
+            // Calcular cuántos tiles necesitamos
+            const cols = Math.ceil(this.w / this.tileSize);
+            const rows = Math.ceil(this.h / this.tileSize);
+            
+            // Dibujar cada tile con patrón
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const tileX = this.x + (col * this.tileSize);
+                    const tileY = this.y + (row * this.tileSize);
+                    
+                    ctx.save();
+                    ctx.translate(tileX, tileY);
+                    
+                    // Crear patrón NORMAL sin escalar
+                    const pattern = ctx.createPattern(metalTexture, "repeat");
+                    ctx.fillStyle = pattern;
+                    
+                    // Rellenar tile completo (40×40)
+                    ctx.fillRect(0, 0, this.tileSize, this.tileSize);
+                    ctx.restore();
+                    
+                    // Bordes del tile (opcional)
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
                 }
             }
         } else {
-            ctx.fillStyle = "#8b4513";
+            // Fallback si no carga la textura
+            ctx.fillStyle = "#4a4a4a";
             ctx.fillRect(this.x, this.y, this.w, this.h);
         }
         
+        // Efecto visual cuando se está desactivando
         if (this.deactivating) {
             ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * this.alpha})`;
             ctx.fillRect(this.x, this.y, this.w, this.h);

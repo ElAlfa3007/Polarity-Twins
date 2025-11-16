@@ -38,6 +38,7 @@ class Spark {
     isDead() { return this.life <= 0; }
 }
 
+
 export class Level1 {
     constructor() {
         this.tileSize = 40;
@@ -76,7 +77,7 @@ export class Level1 {
         this.solids = [];
         this.sparks = [];
         this.sparkTimer = 0;
-        this.sparkInterval = 0.3;
+        this.sparkInterval = 0.1;
         this.bgMusic = null;
         this.musicStarted = false;
         
@@ -266,7 +267,7 @@ export class Level1 {
         this.sparkTimer += dt;
         if (this.sparkTimer >= this.sparkInterval) {
             this.sparkTimer = 0;
-            if (Math.random() < 0.3) this.createSpark();
+            if (Math.random() < 0.6) this.createSpark();
         }
         this.sparks = this.sparks.filter(spark => {
             spark.update(dt);
@@ -369,6 +370,9 @@ export class Level1 {
         }
     }
 
+    
+
+
     draw(ctx) {
         // Fondo
         const levelBG = Loader.get("Level1");
@@ -384,26 +388,38 @@ export class Level1 {
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
                 if (this.tiles[y][x] === 1) {
-                    const [tileX, tileY] = [x * this.tileSize, y * this.tileSize];
-                    
+
+                    const tileX = x * this.tileSize;
+                    const tileY = y * this.tileSize;
+
                     if (metalTexture && metalTexture.complete) {
                         ctx.save();
+
                         ctx.translate(tileX, tileY);
-                        const pattern = ctx.createPattern(metalTexture, 'repeat');
+
+                        // Crear patrón NORMAL sin escalar
+                        const pattern = ctx.createPattern(metalTexture, "repeat");
                         ctx.fillStyle = pattern;
-                        ctx.scale(2, 2);
-                        ctx.fillRect(0, 0, this.tileSize / 2, this.tileSize / 2);
+
+                        // Rellenar tile completo (40×40)
+                        ctx.fillRect(0, 0, this.tileSize, this.tileSize);
+
                         ctx.restore();
+
+                        // Bordes del tile (opcional)
                         ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
                         ctx.lineWidth = 2;
                         ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
+
                     } else {
+                        // Fallback si no carga la textura
                         ctx.fillStyle = "#4a4a4a";
                         ctx.fillRect(tileX, tileY, this.tileSize, this.tileSize);
                     }
                 }
             }
         }
+
         
         this.sparks.forEach(spark => spark.draw(ctx));
         this.buttons.forEach(button => button.draw(ctx));
@@ -479,35 +495,141 @@ export class Level1 {
     }
 
     drawVictoryScreen(ctx) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+        const time = Date.now() / 1000;
+        
+        // Fondo oscuro con gradiente sutil
+        const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        gradient.addColorStop(0, "rgba(10, 5, 15, 0.95)");
+        gradient.addColorStop(0.5, "rgba(15, 8, 20, 0.98)");
+        gradient.addColorStop(1, "rgba(5, 0, 10, 0.95)");
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         
-        ctx.fillStyle = "#FFD700";
-        ctx.font = "bold 48px Arial";
-        ctx.textAlign = "center";
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "#FFD700";
-        ctx.fillText("¡NIVEL 1 COMPLETADO!", ctx.canvas.width / 2, ctx.canvas.height / 2 - 80);
-        ctx.shadowBlur = 0;
+        // Líneas decorativas asiáticas (estilo Nine Sols)
+        ctx.strokeStyle = "rgba(255, 100, 50, 0.3)";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            const y = ctx.canvas.height / 2 - 150 + i * 10;
+            ctx.beginPath();
+            ctx.moveTo(ctx.canvas.width / 2 - 250, y);
+            ctx.lineTo(ctx.canvas.width / 2 + 250, y);
+            ctx.stroke();
+        }
         
-        ctx.fillStyle = "#00ff88";
-        ctx.font = "24px Arial";
-        ctx.fillText("¡Excelente trabajo en equipo!", ctx.canvas.width / 2, ctx.canvas.height / 2 - 20);
+        // Efecto de glitch/jitter sutil
+        const jitter = Math.sin(time * 20) * 0.5;
         
-        // Botones interactivos con efecto visual
-        const time = Date.now() / 500;
-        const pulse = Math.sin(time) * 0.2 + 1;
-        
+        // Marco decorativo superior
         ctx.save();
-        ctx.scale(pulse, pulse);
-        ctx.fillStyle = "#00ff00";
-        ctx.font = "bold 22px Arial";
-        ctx.fillText("ENTER - Siguiente Nivel", ctx.canvas.width / 2 / pulse, (ctx.canvas.height / 2 + 40) / pulse);
+        ctx.translate(jitter, 0);
+        ctx.strokeStyle = "#ff6633";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(
+            ctx.canvas.width / 2 - 280, 
+            ctx.canvas.height / 2 - 180, 
+            560, 
+            350
+        );
+        ctx.strokeStyle = "rgba(255, 200, 100, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(
+            ctx.canvas.width / 2 - 285, 
+            ctx.canvas.height / 2 - 185, 
+            570, 
+            360
+        );
         ctx.restore();
         
-        ctx.fillStyle = "#ff5555";
-        ctx.font = "18px Arial";
-        ctx.fillText("ESC - Volver al Menú", ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
+        // Título con estilo manga/cómic
+        ctx.save();
+        ctx.translate(0, Math.sin(time * 2) * 2);
+        ctx.textAlign = "center";
+        
+        // Sombra del título
+        ctx.fillStyle = "rgba(255, 100, 50, 0.5)";
+        ctx.font = "bold 52px 'Courier New', monospace";
+        ctx.fillText("NIVEL COMPLETADO", ctx.canvas.width / 2 + 3, ctx.canvas.height / 2 - 75);
+        
+        // Título principal
+        ctx.fillStyle = "#ffcc88";
+        ctx.strokeStyle = "#ff4422";
+        ctx.lineWidth = 2;
+        ctx.font = "bold 52px 'Courier New', monospace";
+        ctx.strokeText("NIVEL COMPLETADO", ctx.canvas.width / 2, ctx.canvas.height / 2 - 78);
+        ctx.fillText("NIVEL COMPLETADO", ctx.canvas.width / 2, ctx.canvas.height / 2 - 78);
+        ctx.restore();
+        
+        // Línea decorativa central
+        ctx.strokeStyle = "#ff6633";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ctx.canvas.width / 2 - 200, ctx.canvas.height / 2 - 40);
+        ctx.lineTo(ctx.canvas.width / 2 + 200, ctx.canvas.height / 2 - 40);
+        ctx.stroke();
+        
+        // Subtítulo con caracteres asiáticos simulados
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ccaa77";
+        ctx.font = "20px 'Courier New', monospace";
+        ctx.fillText("協力プレイ達成 // COOPERATIVE SUCCESS", ctx.canvas.width / 2, ctx.canvas.height / 2 - 10);
+        
+        // Opciones con estilo cyberpunk/asiático
+        const pulse = Math.sin(time * 3) * 0.15 + 0.85;
+        
+        // Opción: Siguiente Nivel
+        ctx.save();
+        const centerX = ctx.canvas.width / 2;
+        const buttonY1 = ctx.canvas.height / 2 + 50;
+        
+        // Fondo de botón con glitch
+        const glitchOffset = Math.sin(time * 15) * 2;
+        ctx.fillStyle = "rgba(0, 255, 100, 0.1)";
+        ctx.fillRect(centerX - 180 + glitchOffset, buttonY1 - 20, 360, 40);
+        
+        // Borde del botón
+        ctx.strokeStyle = `rgba(0, 255, 100, ${pulse})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(centerX - 180, buttonY1 - 20, 360, 40);
+        
+        // Texto del botón
+        ctx.textAlign = "center";
+        ctx.fillStyle = `rgba(0, 255, 150, ${pulse})`;
+        ctx.font = "bold 22px 'Courier New', monospace";
+        ctx.fillText(">> ENTER: SIGUIENTE NIVEL", centerX, buttonY1 + 5);
+        ctx.restore();
+        
+        // Opción: Menú Principal
+        ctx.save();
+        const buttonY2 = ctx.canvas.height / 2 + 110;
+        
+        // Fondo de botón
+        ctx.fillStyle = "rgba(255, 80, 80, 0.1)";
+        ctx.fillRect(centerX - 160, buttonY2 - 18, 320, 36);
+        
+        // Borde del botón
+        ctx.strokeStyle = "rgba(255, 100, 100, 0.6)";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(centerX - 160, buttonY2 - 18, 320, 36);
+        
+        // Texto del botón
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ffaaaa";
+        ctx.font = "18px 'Courier New', monospace";
+        ctx.fillText("ESC: VOLVER AL MENÚ", centerX, buttonY2 + 3);
+        ctx.restore();
+        
+        // Partículas decorativas (estilo Nine Sols)
+        for (let i = 0; i < 8; i++) {
+            const angle = (time * 0.5 + i * Math.PI / 4);
+            const radius = 220 + Math.sin(time * 2 + i) * 10;
+            const x = ctx.canvas.width / 2 + Math.cos(angle) * radius;
+            const y = ctx.canvas.height / 2 - 60 + Math.sin(angle) * radius * 0.5;
+            
+            ctx.fillStyle = `rgba(255, ${100 + i * 10}, 50, ${0.3 + Math.sin(time * 3 + i) * 0.2})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     goToNextLevel() {
