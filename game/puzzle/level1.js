@@ -4,6 +4,7 @@ import { Entity } from "../../engine/entity.js";
 import { Box } from "../../game/puzzle/box.js";
 import { Button } from "../../game/puzzle/button.js";
 import { Wall } from "../../game/puzzle/wall.js";
+import { PauseMenu } from "../../game/puzzle/pauseMenu.js";
 
 class Spark {
     constructor(x, y) {
@@ -59,14 +60,15 @@ export class Level1 {
         ];
         
         // PARED MÁS A LA IZQUIERDA Y COMO SÓLIDO
-        this.wall = new Wall(this.tileSize * 20, this.tileSize * 4, this.tileSize * 2, this.tileSize * 13);
-        this.finalGoal = new Entity(this.tileSize * 24, this.tileSize * 15.5, 80, 40);
+        this.wall = new Wall(this.tileSize * 22, this.tileSize * 5, this.tileSize * 2, this.tileSize * 13);
+        this.finalGoal = new Entity(this.tileSize * 24, this.tileSize * 15.5, 40, 40);
         
         // Estados
         this.bothButtonsPressed = false;
         this.wallDisappeared = false;
         this.levelComplete = false;
         this.showVictoryScreen = false;
+        this.isPaused = false;
         
         // Distancia de tolerancia para considerar que la caja está en posición
         this.proximityThreshold = this.tileSize * 0.8; // 80% del tamaño del tile
@@ -78,29 +80,63 @@ export class Level1 {
         this.bgMusic = null;
         this.musicStarted = false;
         
+        // Menú de pausa
+        this.pauseMenu = new PauseMenu(this);
+        
         this.tiles = this.generateLevel();
         this.createSolidsFromTiles();
         this.keys = {};
         this.setupControls();
+
+        window.addEventListener("blur", () => {
+            this.pause();
+        });
+
+        window.addEventListener("focus", () => {
+            this.unpause();
+        });
     }
 
     setupControls() {
-        window.addEventListener('keydown', e => {
+        this.keydownHandler = (e) => {
             this.keys[e.key] = this.keys[e.key.toLowerCase()] = this.keys[e.key.toUpperCase()] = true;
             
-            // Detectar ENTER para siguiente nivel
+            // Detectar ESC para pausar/despausar
+            if (e.key === 'Escape' && !this.showVictoryScreen) {
+                if (this.isPaused) {
+                    this.unpause();
+                } else {
+                    this.pause();
+                }
+            }
+            
+            // Detectar ENTER para siguiente nivel (solo en pantalla de victoria)
             if (this.showVictoryScreen && e.key === 'Enter') {
                 this.goToNextLevel();
             }
             
-            // Detectar ESC para volver al menú
+            // Detectar ESC para volver al menú (solo en pantalla de victoria)
             if (this.showVictoryScreen && e.key === 'Escape') {
                 this.returnToMenu();
             }
-        });
-        window.addEventListener('keyup', e => {
+        };
+        
+        this.keyupHandler = (e) => {
             this.keys[e.key] = this.keys[e.key.toLowerCase()] = this.keys[e.key.toUpperCase()] = false;
-        });
+        };
+        
+        window.addEventListener('keydown', this.keydownHandler);
+        window.addEventListener('keyup', this.keyupHandler);
+    }
+
+    pause() {
+        this.isPaused = true;
+        console.log("⏸️ Juego pausado");
+    }
+
+    unpause() {
+        this.isPaused = false;
+        console.log("▶️ Juego reanudado");
     }
 
     startMusic() {
@@ -154,12 +190,15 @@ export class Level1 {
         tiles[10][14] = 1;
         tiles[9][14] = 1;
         
-        // Escalón 3 - más ancho        
+        // Escalón 3 - más ancho
+        for (let x = 20; x <= 21; x++) tiles[8][x] = 1;
+        
         // Espacio vertical
-        tiles[8][18] = 1;
+        tiles[7][18] = 1;
+        tiles[6][18] = 1;
         
         // Plataforma de cajas (ARRIBA)
-        for (let x = 11; x <= 15; x++) tiles[4][x] = 1;
+        for (let x = 9; x <= 15; x++) tiles[4][x] = 1;
         
         // Escalera para BAJAR las cajas (lado derecho)
         for (let x = 5; x <= 8; x++) tiles[7][x] = 1;
@@ -178,10 +217,11 @@ export class Level1 {
         
         // CERRAR ESPACIO SOBRE LA PARED (más a la izquierda)
         for (let x = 22; x <= 23; x++) {
-            for (let y = 1; y <= 3; y++) {
+            for (let y = 1; y <= 4; y++) {
                 tiles[y][x] = 1;
             }
         }
+
         
         // Plataforma final (después de la pared)
         for (let x = 19; x <= 28; x++) tiles[17][x] = 1;
@@ -250,6 +290,12 @@ export class Level1 {
     }
 
     update(dt) {
+        // Si está pausado, solo actualizar el menú de pausa
+        if (this.isPaused) {
+            this.pauseMenu.update(dt);
+            return;
+        }
+        
         this.startMusic();
         this.playerBlue.update(dt, this);
         this.playerRed.update(dt, this);
@@ -267,8 +313,6 @@ export class Level1 {
         const redBoxNearRedButton = this.isBoxNearButton(this.boxes[1], this.buttons[1]);
         
         const bothBoxesInPosition = blueBoxNearBlueButton && redBoxNearRedButton;
-        
-        console.log(`Blue box near blue button: ${blueBoxNearBlueButton}, Red box near red button: ${redBoxNearRedButton}`);
         
         // Desactivar la pared cuando ambas cajas estén en posición
         if (bothBoxesInPosition && !this.bothButtonsPressed) {
@@ -367,12 +411,37 @@ export class Level1 {
         
         if (this.wall.isActive || this.wall.alpha > 0) this.wall.draw(ctx);
         
-        const goalTexture = Loader.get("GoldTexture");
-        if (goalTexture && goalTexture.complete) {
-            ctx.drawImage(goalTexture, this.finalGoal.x, this.finalGoal.y, this.finalGoal.w, this.finalGoal.h);
-        } else {
-            ctx.fillStyle = "#FFD700";
-            ctx.fillRect(this.finalGoal.x, this.finalGoal.y, this.finalGoal.w, this.finalGoal.h);
+        // Dibujar la meta dorada cuando la pared desaparezca
+        if (this.wallDisappeared) {
+            const goldTexture = Loader.get("Dorado");
+            
+            if (goldTexture && goldTexture.complete) {
+                // Efecto de brillo pulsante
+                const time = Date.now() / 1000;
+                const pulse = Math.sin(time * 2) * 0.1 + 1;
+                
+                ctx.save();
+                ctx.shadowBlur = 30 * pulse;
+                ctx.shadowColor = "#FFD700";
+                ctx.drawImage(goldTexture, this.finalGoal.x, this.finalGoal.y, this.finalGoal.w, this.finalGoal.h);
+                ctx.restore();
+            } else {
+                // Fallback si la textura no carga
+                ctx.fillStyle = "#FFD700";
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = "#FFD700";
+                ctx.fillRect(this.finalGoal.x, this.finalGoal.y, this.finalGoal.w, this.finalGoal.h);
+                ctx.shadowBlur = 0;
+            }
+            
+            // Texto sobre la meta
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "#000";
+            ctx.fillText("META FINAL", this.finalGoal.x + this.finalGoal.w / 2, this.finalGoal.y - 10);
+            ctx.shadowBlur = 0;
         }
         
         this.playerBlue.draw(ctx);
@@ -398,7 +467,15 @@ export class Level1 {
         ctx.font = "11px Arial";
         ctx.fillText("¡Coloquen las cajas CERCA de sus botones!", 20, 115);
         
-        if (this.showVictoryScreen) this.drawVictoryScreen(ctx);
+        // Dibujar menú de pausa si está pausado
+        if (this.isPaused) {
+            this.pauseMenu.draw(ctx);
+        }
+        
+        // Dibujar pantalla de victoria
+        if (this.showVictoryScreen) {
+            this.drawVictoryScreen(ctx);
+        }
     }
 
     drawVictoryScreen(ctx) {
@@ -436,17 +513,21 @@ export class Level1 {
     goToNextLevel() {
         console.log("🎮 Ir al siguiente nivel");
         this.stopMusic();
-        // Aquí debes implementar la lógica para cargar el siguiente nivel
-        // Por ejemplo: window.game.loadLevel(2);
-        alert("¡Próximamente: Nivel 2!");
+        if (window.game && window.game.loadLevel) {
+            window.game.loadLevel(2);
+        } else {
+            alert("¡Próximamente: Nivel 2!");
+        }
     }
 
     returnToMenu() {
         console.log("🏠 Volver al menú principal");
         this.stopMusic();
-        // Aquí debes implementar la lógica para volver al menú
-        // Por ejemplo: window.game.showMenu();
-        alert("Volviendo al menú principal...");
+        if (window.game && window.game.showMenu) {
+            window.game.showMenu();
+        } else {
+            alert("Volviendo al menú principal...");
+        }
     }
 
     reset() {
@@ -470,9 +551,22 @@ export class Level1 {
             new Box(this.tileSize * 13, this.tileSize * 3, "red")
         ];
         
-        this.wall = new Wall(this.tileSize * 22, this.tileSize * 4, this.tileSize * 2, this.tileSize * 13);
+        this.wall = new Wall(this.tileSize * 22, this.tileSize * 5, this.tileSize * 2, this.tileSize * 13);
         
         this.sparks = [];
         this.sparkTimer = 0;
+    }
+
+    destroy() {
+        // Limpiar event listeners
+        window.removeEventListener('keydown', this.keydownHandler);
+        window.removeEventListener('keyup', this.keyupHandler);
+        
+        // Destruir menú de pausa
+        if (this.pauseMenu) {
+            this.pauseMenu.destroy();
+        }
+        
+        this.stopMusic();
     }
 }

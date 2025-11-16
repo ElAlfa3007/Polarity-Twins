@@ -2,9 +2,11 @@
 import { Loader } from "./engine/loader.js";
 import { StateManager } from "./engine/stateManager.js";
 import { Level1 } from "./game/puzzle/level1.js";
+// Nota: Level2 y Level3 se cargarán dinámicamente cuando existan
 
-// Niveles
-const level = new Level1();
+// Nivel actual
+let currentLevel = null;
+let currentLevelNumber = 1;
 
 // Canvas y contexto
 const canvas = document.getElementById('game');
@@ -37,7 +39,6 @@ class Particle {
     this.life = 1;
     this.decay = Math.random() * 0.002 + 0.001;
   }
-
   update(dt) {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
@@ -46,7 +47,6 @@ class Particle {
     // Movimiento ondulante
     this.x += Math.sin(Date.now() * 0.001 + this.y) * 0.3;
   }
-
   draw(ctx) {
     if (this.life <= 0) return;
     
@@ -66,7 +66,6 @@ class Particle {
     
     ctx.restore();
   }
-
   isDead() {
     return this.life <= 0;
   }
@@ -98,14 +97,16 @@ const SaveManager = {
 const menuOptions = [
   { text: "INICIAR", action: "start", enabled: true },
   { text: "CONTINUAR", action: "continue", enabled: false },
+  { text: "NIVELES", action: "levels", enabled: true },
   { text: "CRÉDITOS", action: "credits", enabled: true }
 ];
 
-// Opciones del menú de pausa
-const pauseOptions = [
-  { text: "CONTINUAR", action: "resume" },
-  { text: "GUARDAR", action: "save" },
-  { text: "VOLVER AL TÍTULO", action: "menu" }
+// Opciones del selector de niveles
+const levelOptions = [
+  { text: "NIVEL 1", level: 1 },
+  { text: "NIVEL 2", level: 2 },
+  { text: "NIVEL 3", level: 3 },
+  { text: "← VOLVER", action: "back" }
 ];
 
 // Opciones de game over
@@ -117,7 +118,7 @@ const gameOverOptions = [
 // Créditos
 const credits = [
   { role: "Programadores", name: "Leandro Bravo y Andrés Pérez" },
-  { role: "Artista", name: "Leandro Braco y Andrés Pérez" },
+  { role: "Artista", name: "Leandro Bravo y Andrés Pérez" },
 ];
 
 let selectedOption = 0;
@@ -129,30 +130,30 @@ let optionShake = [];
 async function init() {
   // Cargar assets (el Loader ya carga todo)
   await Loader.loadAll();
-
+  
   // Obtener assets del Loader
   menuBG = Loader.get("MenuBG");
   menuMusic = Loader.get("MenuMusic");
-
+  
   // Configurar música
   if (menuMusic) {
     menuMusic.loop = true;
     menuMusic.volume = 0.5;
     menuMusic.play().catch(e => console.warn("Audio autoplay bloqueado:", e));
   }
-
+  
   // Inicializar partículas
   initParticles();
-
+  
   // Verificar si hay partida guardada
   menuOptions[1].enabled = SaveManager.hasSave();
-
+  
   // Inicializar escalas y shake
   resetOptionAnimations();
-
+  
   // Cambiar al menú
   gameState.change("menu");
-
+  
   requestAnimationFrame(loop);
 }
 
@@ -204,18 +205,66 @@ function updateParticles(dt) {
 }
 
 function resetOptionAnimations() {
-  optionScale = new Array(menuOptions.length).fill(1);
-  optionShake = new Array(menuOptions.length).fill(0);
+  const maxOptions = Math.max(menuOptions.length, levelOptions.length, gameOverOptions.length);
+  optionScale = new Array(maxOptions).fill(1);
+  optionShake = new Array(maxOptions).fill(0);
+}
+
+function loadLevel(levelNum) {
+  currentLevelNumber = levelNum;
+  
+  // Detener música y destruir nivel anterior si existe
+  if (currentLevel) {
+    if (currentLevel.stopMusic) currentLevel.stopMusic();
+    if (currentLevel.destroy) currentLevel.destroy();
+  }
+  
+  switch (levelNum) {
+    case 1:
+      currentLevel = new Level1();
+      break;
+    case 2:
+      // Importación dinámica de Level2
+      import('./game/puzzle/level2.js')
+        .then(module => {
+          currentLevel = new module.Level2();
+          gameState.change("game");
+          if (menuMusic) menuMusic.pause();
+        })
+        .catch(err => {
+          console.error("Level 2 no disponible aún");
+          alert("¡Nivel 2 próximamente!");
+          gameState.change("levelselect");
+        });
+      return; // Salir temprano para esperar la carga asíncrona
+    case 3:
+      // Importación dinámica de Level3
+      import('./game/puzzle/level3.js')
+        .then(module => {
+          currentLevel = new module.Level3();
+          gameState.change("game");
+          if (menuMusic) menuMusic.pause();
+        })
+        .catch(err => {
+          console.error("Level 3 no disponible aún");
+          alert("¡Nivel 3 próximamente!");
+          gameState.change("levelselect");
+        });
+      return; // Salir temprano para esperar la carga asíncrona
+    default:
+      console.error("Nivel no encontrado:", levelNum);
+      currentLevel = new Level1();
+  }
 }
 
 // Game Loop
 function loop(ts) {
   const dt = (ts - last) / 1000;
   last = ts;
-
+  
   update(dt);
   render();
-
+  
   requestAnimationFrame(loop);
 }
 
@@ -225,19 +274,17 @@ function update(dt) {
     case "menu":
       updateMenu(dt);
       break;
-
+    case "levelselect":
+      updateLevelSelect(dt);
+      break;
     case "game":
-      level.update(dt);
+      if (currentLevel) {
+        currentLevel.update(dt);
+      }
       break;
-
-    case "pause":
-      updatePause(dt);
-      break;
-
     case "gameover":
       updateGameOver(dt);
       break;
-
     case "credits":
       updateParticles(dt);
       break;
@@ -255,14 +302,14 @@ function updateMenu(dt) {
       optionShake[i] = 0;
     }
   }
-
+  
   // Actualizar partículas
   updateParticles(dt);
 }
 
-function updatePause(dt) {
-  // Actualizar animaciones de pausa
-  for (let i = 0; i < pauseOptions.length; i++) {
+function updateLevelSelect(dt) {
+  // Actualizar animaciones del selector de niveles
+  for (let i = 0; i < levelOptions.length; i++) {
     if (i === optionHover) {
       optionScale[i] = Math.min(optionScale[i] + dt * 3, 1.15);
       optionShake[i] = Math.sin(Date.now() * 0.01) * 2;
@@ -271,6 +318,8 @@ function updatePause(dt) {
       optionShake[i] = 0;
     }
   }
+  
+  updateParticles(dt);
 }
 
 function updateGameOver(dt) {
@@ -289,26 +338,25 @@ function updateGameOver(dt) {
 // RENDERIZADO
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  
   switch (gameState.state) {
     case "menu":
       drawMenu();
       break;
-
+    case "levelselect":
+      drawLevelSelect();
+      break;
     case "game":
-      level.draw(ctx);
+      if (currentLevel) {
+        currentLevel.draw(ctx);
+      }
       break;
-
-    case "pause":
-      level.draw(ctx); // Dibujar el juego de fondo
-      drawPause();
-      break;
-
     case "gameover":
-      level.draw(ctx); // Dibujar el juego de fondo
+      if (currentLevel) {
+        currentLevel.draw(ctx);
+      }
       drawGameOver();
       break;
-
     case "credits":
       drawCredits();
       break;
@@ -316,7 +364,6 @@ function render() {
 }
 
 // FUNCIONES DE DIBUJADO
-
 function drawMenu() {
   // Dibujar imagen de fondo del menú
   if (menuBG && menuBG.complete) {
@@ -326,14 +373,14 @@ function drawMenu() {
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
-
+  
   // Overlay oscuro sutil
   ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  
   // Dibujar partículas
   particles.forEach(particle => particle.draw(ctx));
-
+  
   // Título del juego (estilo Nine Sols)
   ctx.save();
   ctx.font = "bold 72px 'Arial Black', sans-serif";
@@ -354,23 +401,23 @@ function drawMenu() {
   ctx.fillText("FINAL", 56, 206);
   
   ctx.restore();
-
+  
   // Dibujar opciones del menú
   const startY = canvas.height / 2 + 100;
   const spacing = 60;
-
+  
   ctx.font = "28px 'Arial', sans-serif";
   ctx.textAlign = "left";
-
+  
   menuOptions.forEach((option, i) => {
     const y = startY + i * spacing;
     const scale = optionScale[i];
     const shake = optionShake[i];
-
+    
     ctx.save();
     ctx.translate(100 + shake, y);
     ctx.scale(scale, scale);
-
+    
     if (!option.enabled) {
       ctx.fillStyle = "rgba(150, 150, 150, 0.5)";
     } else if (i === optionHover) {
@@ -380,11 +427,11 @@ function drawMenu() {
     } else {
       ctx.fillStyle = "#f4e4c1";
     }
-
+    
     ctx.fillText(option.text, 0, 0);
     ctx.restore();
   });
-
+  
   // Versión del juego
   ctx.font = "12px monospace";
   ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
@@ -392,35 +439,46 @@ function drawMenu() {
   ctx.fillText("v1.0.0", 10, canvas.height - 10);
 }
 
-function drawPause() {
-  // Overlay oscuro sobre el juego
-  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+function drawLevelSelect() {
+  // Dibujar imagen de fondo del menú
+  if (menuBG && menuBG.complete) {
+    ctx.drawImage(menuBG, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = "#1a1a2e";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  
+  // Overlay oscuro
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Título PAUSA
-  ctx.font = "bold 64px 'Arial Black', sans-serif";
+  
+  // Dibujar partículas
+  particles.forEach(particle => particle.draw(ctx));
+  
+  // Título
+  ctx.font = "bold 48px 'Arial Black', sans-serif";
   ctx.textAlign = "center";
   ctx.fillStyle = "#f4e4c1";
   ctx.strokeStyle = "#8b6914";
   ctx.lineWidth = 3;
-  ctx.strokeText("PAUSA", canvas.width / 2, 150);
-  ctx.fillText("PAUSA", canvas.width / 2, 150);
-
-  // Opciones de pausa
-  const startY = canvas.height / 2 + 50;
-  const spacing = 60;
-
-  ctx.font = "28px 'Arial', sans-serif";
-
-  pauseOptions.forEach((option, i) => {
+  ctx.strokeText("SELECCIONAR NIVEL", canvas.width / 2, 120);
+  ctx.fillText("SELECCIONAR NIVEL", canvas.width / 2, 120);
+  
+  // Opciones de niveles
+  const startY = 250;
+  const spacing = 80;
+  
+  ctx.font = "32px 'Arial', sans-serif";
+  
+  levelOptions.forEach((option, i) => {
     const y = startY + i * spacing;
     const scale = optionScale[i];
     const shake = optionShake[i];
-
+    
     ctx.save();
     ctx.translate(canvas.width / 2 + shake, y);
     ctx.scale(scale, scale);
-
+    
     if (i === optionHover) {
       ctx.fillStyle = "#ffd700";
       ctx.fillText("▶ " + option.text + " ◀", 0, 0);
@@ -428,7 +486,7 @@ function drawPause() {
       ctx.fillStyle = "#f4e4c1";
       ctx.fillText(option.text, 0, 0);
     }
-
+    
     ctx.restore();
   });
 }
@@ -437,7 +495,7 @@ function drawGameOver() {
   // Overlay oscuro
   ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  
   // Título GAME OVER
   ctx.font = "bold 64px 'Arial Black', sans-serif";
   ctx.textAlign = "center";
@@ -446,22 +504,22 @@ function drawGameOver() {
   ctx.lineWidth = 3;
   ctx.strokeText("GAME OVER", canvas.width / 2, 150);
   ctx.fillText("GAME OVER", canvas.width / 2, 150);
-
+  
   // Opciones
   const startY = canvas.height / 2 + 50;
   const spacing = 60;
-
+  
   ctx.font = "28px 'Arial', sans-serif";
-
+  
   gameOverOptions.forEach((option, i) => {
     const y = startY + i * spacing;
     const scale = optionScale[i];
     const shake = optionShake[i];
-
+    
     ctx.save();
     ctx.translate(canvas.width / 2 + shake, y);
     ctx.scale(scale, scale);
-
+    
     if (i === optionHover) {
       ctx.fillStyle = "#ffd700";
       ctx.fillText("▶ " + option.text + " ◀", 0, 0);
@@ -469,7 +527,7 @@ function drawGameOver() {
       ctx.fillStyle = "#f4e4c1";
       ctx.fillText(option.text, 0, 0);
     }
-
+    
     ctx.restore();
   });
 }
@@ -482,35 +540,35 @@ function drawCredits() {
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
-
+  
   // Dibujar partículas
   particles.forEach(particle => particle.draw(ctx));
-
+  
   ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  
   // Título
   ctx.font = "bold 48px 'Arial Black', sans-serif";
   ctx.textAlign = "center";
   ctx.fillStyle = "#f4e4c1";
   ctx.fillText("CRÉDITOS", canvas.width / 2, 100);
-
+  
   // Lista de créditos
   const startY = 200;
   const spacing = 80;
-
+  
   credits.forEach((credit, i) => {
     const y = startY + i * spacing;
-
+    
     ctx.font = "20px 'Arial', sans-serif";
     ctx.fillStyle = "#999";
     ctx.fillText(credit.role, canvas.width / 2, y);
-
+    
     ctx.font = "28px 'Arial', sans-serif";
     ctx.fillStyle = "#f4e4c1";
     ctx.fillText(credit.name, canvas.width / 2, y + 30);
   });
-
+  
   // Instrucción para volver
   ctx.font = "18px 'Arial', sans-serif";
   ctx.fillStyle = "#666";
@@ -522,13 +580,13 @@ canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   mouseX = e.clientX - rect.left;
   mouseY = e.clientY - rect.top;
-
+  
   // Detectar hover sobre opciones
   if (gameState.state === "menu") {
     const startY = canvas.height / 2 + 100;
     const spacing = 60;
     optionHover = -1;
-
+    
     menuOptions.forEach((option, i) => {
       const y = startY + i * spacing;
       if (mouseX > 70 && mouseX < 400 && 
@@ -537,12 +595,12 @@ canvas.addEventListener('mousemove', (e) => {
         optionHover = i;
       }
     });
-  } else if (gameState.state === "pause") {
-    const startY = canvas.height / 2 + 50;
-    const spacing = 60;
+  } else if (gameState.state === "levelselect") {
+    const startY = 250;
+    const spacing = 80;
     optionHover = -1;
-
-    pauseOptions.forEach((option, i) => {
+    
+    levelOptions.forEach((option, i) => {
       const y = startY + i * spacing;
       if (mouseY > y - 20 && mouseY < y + 20) {
         optionHover = i;
@@ -552,7 +610,7 @@ canvas.addEventListener('mousemove', (e) => {
     const startY = canvas.height / 2 + 50;
     const spacing = 60;
     optionHover = -1;
-
+    
     gameOverOptions.forEach((option, i) => {
       const y = startY + i * spacing;
       if (mouseY > y - 20 && mouseY < y + 20) {
@@ -566,9 +624,8 @@ canvas.addEventListener('click', () => {
   if (gameState.state === "menu" && optionHover !== -1) {
     const action = menuOptions[optionHover].action;
     handleMenuAction(action);
-  } else if (gameState.state === "pause" && optionHover !== -1) {
-    const action = pauseOptions[optionHover].action;
-    handlePauseAction(action);
+  } else if (gameState.state === "levelselect" && optionHover !== -1) {
+    handleLevelSelectAction(optionHover);
   } else if (gameState.state === "gameover" && optionHover !== -1) {
     const action = gameOverOptions[optionHover].action;
     handleGameOverAction(action);
@@ -579,17 +636,24 @@ canvas.addEventListener('click', () => {
 function handleMenuAction(action) {
   switch (action) {
     case "start":
-      level.reset();
+      loadLevel(1);
       gameState.change("game");
       if (menuMusic) menuMusic.pause();
       break;
     case "continue":
       const saveData = SaveManager.load();
       if (saveData) {
-        level.loadState(saveData);
+        loadLevel(saveData.level || 1);
+        if (currentLevel.loadState) {
+          currentLevel.loadState(saveData);
+        }
         gameState.change("game");
         if (menuMusic) menuMusic.pause();
       }
+      break;
+    case "levels":
+      gameState.change("levelselect");
+      resetOptionAnimations();
       break;
     case "credits":
       gameState.change("credits");
@@ -597,34 +661,36 @@ function handleMenuAction(action) {
   }
 }
 
-function handlePauseAction(action) {
-  switch (action) {
-    case "resume":
+function handleLevelSelectAction(index) {
+  const option = levelOptions[index];
+  
+  if (option.action === "back") {
+    gameState.change("menu");
+    resetOptionAnimations();
+  } else if (option.level) {
+    loadLevel(option.level);
+    
+    // Solo cambiar a "game" si es el nivel 1 (carga síncrona)
+    // Los otros niveles se cargan asíncronamente
+    if (option.level === 1) {
       gameState.change("game");
-      break;
-    case "save":
-      const gameData = level.getState();
-      SaveManager.save(gameData);
-      menuOptions[1].enabled = true;
-      alert("¡Partida guardada!");
-      break;
-    case "menu":
-      gameState.change("menu");
-      if (menuMusic) {
-        menuMusic.currentTime = 0;
-        menuMusic.play();
-      }
-      break;
+      if (menuMusic) menuMusic.pause();
+    }
   }
 }
 
 function handleGameOverAction(action) {
   switch (action) {
     case "retry":
-      level.reset();
+      if (currentLevel && currentLevel.reset) {
+        currentLevel.reset();
+      }
       gameState.change("game");
       break;
     case "menu":
+      if (currentLevel && currentLevel.stopMusic) {
+        currentLevel.stopMusic();
+      }
       gameState.change("menu");
       if (menuMusic) {
         menuMusic.currentTime = 0;
@@ -639,20 +705,40 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && gameState.state === "menu") {
     handleMenuAction("start");
   }
-  if (e.key === "Escape" && gameState.state === "game") {
-    gameState.change("pause");
+  
+  if (e.key === "Escape" && gameState.state === "levelselect") {
+    gameState.change("menu");
     resetOptionAnimations();
   }
-  if (e.key === "Escape" && gameState.state === "pause") {
-    gameState.change("game");
-  }
+  
   if (e.key === "Escape" && gameState.state === "credits") {
     gameState.change("menu");
   }
+  
   if (e.key === "r" && gameState.state === "gameover") {
     handleGameOverAction("retry");
   }
 });
+
+// Funciones públicas para que los niveles puedan cambiar de estado
+window.game = {
+  loadLevel: (levelNum) => {
+    loadLevel(levelNum);
+    gameState.change("game");
+    if (menuMusic) menuMusic.pause();
+  },
+  showMenu: () => {
+    if (currentLevel) {
+      if (currentLevel.stopMusic) currentLevel.stopMusic();
+      if (currentLevel.destroy) currentLevel.destroy();
+    }
+    gameState.change("menu");
+    if (menuMusic) {
+      menuMusic.currentTime = 0;
+      menuMusic.play();
+    }
+  }
+};
 
 // Iniciar
 init();
