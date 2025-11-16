@@ -284,7 +284,7 @@ export class Player extends Entity {
                     return `${prefix}${7 + this.animFrame}`;
                 } else {
                     // Para red, ciclar entre 7-9
-                    return `${prefix}${7 + (this.animFrame % 3)}`;
+                    return `${prefix}${7 + (this.animFrame)}`;
                 }
             }
         }

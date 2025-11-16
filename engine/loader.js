@@ -66,7 +66,7 @@ const ASSET_LIST = [
     { type: "image", name: "Dorado", src: "assets/imagen/star.png" },
 
     // Rock
-    { type: "image", name: "Rock", src: "assets/imagen/roca.png" },
+    { type: "image", name: "Rock", src: "assets/imagen/rock.png" },
 
     // Audio
     { type: "audio", name: "MenuMusic", src: "./assets/sonido/Grimes  Genesis.mp3" },

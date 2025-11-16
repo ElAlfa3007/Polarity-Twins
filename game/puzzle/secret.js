@@ -1,66 +1,214 @@
 import { Loader } from "../../engine/loader.js";
 import { Player } from "../../game/puzzle/player.js";
 import { Entity } from "../../engine/entity.js";
+import { PauseMenu } from "../../game/puzzle/pauseMenu.js";
 
 export class LevelSecret {
     constructor() {
         this.tileSize = 40;
         this.cols = 30;
         this.rows = 18;
-        
-        // Jugadores en el centro de la plataforma
-        this.playerBlue = new Player(this.tileSize * 13, this.tileSize * 14, "blue");
-        this.playerRed = new Player(this.tileSize * 16, this.tileSize * 14, "red");
-        
-        // Bloquear controles - los jugadores no pueden moverse
-        this.playerBlue.canMove = false;
-        this.playerRed.canMove = false;
-        
-        // Plataforma central de roca
-        this.platform = new Entity(this.tileSize * 11, this.tileSize * 15, this.tileSize * 8, this.tileSize * 2);
-        this.solids = [this.platform];
-        
-        // Sistema de secuencia cinematográfica
+
+        // 🔥 VARIABLES NECESARIAS PARA LA ANIMACIÓN
         this.sequenceTimer = 0;
-        this.currentPhase = 0; // 0: Ojo4, 1: Ojo1, 2: Ojo2, 3: Ojo3, 4: Blanco
-        this.phaseDurations = [
-            30,  // Fase 0: 30 segundos (oscuridad)
-            25,  // Fase 1: 25 segundos (niebla aparece)
-            20,  // Fase 2: 20 segundos (niebla fuerte)
-            15,  // Fase 3: 15 segundos (luz roja intensa)
-            15   // Fase 4: 15 segundos (transición a blanco total)
-        ]; // Total: 105 segundos (1:45 minutos)
-        
-        // Efectos visuales
-        this.lightIntensity = 0.1; // Luz inicial muy tenue
+        this.currentPhase = 0;
+
+        // 🔥 DURACIÓN EXTENDIDA PARA 1:40 MINUTOS (100 segundos)
+        this.phaseDurations = [15, 25, 25, 20, 15]; // Total: 100 segundos
+
+        // Luces
+        this.lightIntensity = 0.1;
         this.fogIntensity = 0;
-        this.fogColor = { r: 180, g: 0, b: 0 };
         this.redLightIntensity = 0;
         this.whiteIntensity = 0;
-        
-        // Partículas de niebla
+
+        // Niebla
         this.fogParticles = [];
-        this.initFogParticles();
-        
+        this.fogColor = { r: 180, g: 0, b: 0 };
+
         // Música
-        this.bgMusic = null;
         this.musicStarted = false;
-        
+
+        // 🔥 SISTEMA DE PAUSA
+        this.isPaused = false;
+        this.pauseMenu = new PauseMenu(this);
+
+        // Controles - INICIALIZAR PRIMERO
         this.keys = {};
         this.setupControls();
+
+        // Generar nivel y sólidos
+        this.solids = [];
+        this.tiles = this.generateLevel();
+        this.createSolidsFromTiles();
+
+        // 🔥 ELIMINAR PLATAFORMA CENTRAL Y POSICIONES INICIALES
+        // Los jugadores aparecen en posiciones aleatorias en plataformas existentes
+        const spawnPositions = this.findSpawnPositions();
+        if (spawnPositions.length >= 2) {
+            this.playerBlue = new Player(spawnPositions[0].x, spawnPositions[0].y, "blue");
+            this.playerRed = new Player(spawnPositions[1].x, spawnPositions[1].y, "red");
+        } else {
+            // Fallback si no hay suficientes plataformas
+            this.playerBlue = new Player(this.tileSize * 5, this.tileSize * 3, "blue");
+            this.playerRed = new Player(this.tileSize * 25, this.tileSize * 3, "red");
+        }
+
+        this.playerBlue.canMove = true;
+        this.playerRed.canMove = true;
+
+        // 🔥 ELIMINADA PLATAFORMA CENTRAL
+
+        // Inicializar partículas de niebla
+        this.initFogParticles();
+
+        // 🔥 EVENT LISTENERS PARA PAUSA AUTOMÁTICA
+        window.addEventListener("blur", () => {
+            this.pause();
+        });
+
+        window.addEventListener("focus", () => {
+            this.unpause();
+        });
+    }
+
+    // 🔥 ENCONTRAR POSICIONES DE SPAWN EN PLATAFORMAS EXISTENTES
+    findSpawnPositions() {
+        const positions = [];
+        
+        // Buscar plataformas adecuadas para spawn
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                if (this.tiles[y][x] === 1) {
+                    // Verificar que sea una plataforma accesible (no en bordes extremos)
+                    if (x > 2 && x < this.cols - 3 && y > 2 && y < this.rows - 3) {
+                        positions.push({
+                            x: x * this.tileSize,
+                            y: (y - 1) * this.tileSize // Spawn encima de la plataforma
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Mezclar posiciones y tomar las primeras 2
+        return positions.sort(() => Math.random() - 0.5).slice(0, 2);
+    }
+
+    createSolidsFromTiles() {
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                if (this.tiles[y][x] === 1) {
+                    this.solids.push(
+                        new Entity(
+                            x * this.tileSize,
+                            y * this.tileSize,
+                            this.tileSize,
+                            this.tileSize
+                        )
+                    );
+                }
+            }
+        }
     }
     
+    generateLevel() {
+        const tiles = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
+
+        // BORDES EXTERIORES
+        for (let x = 0; x < this.cols; x++) {
+            tiles[0][x] = 1;                   // Techo
+            tiles[this.rows - 1][x] = 1;       // Piso
+        }
+        for (let y = 0; y < this.rows; y++) {
+            tiles[y][0] = 1;                   // Pared izquierda
+            tiles[y][this.cols - 1] = 1;       // Pared derecha
+        }
+
+        // RECTÁNGULO INTERIOR AJUSTADO AL MARGEN
+        const margin = 3;
+        const leftWall = margin;
+        const rightWall = this.cols - margin - 1;
+        const topPlatform = margin;
+        const bottomPlatform = this.rows - margin - 1;
+
+        // 🔥 PARED IZQUIERDA INTERIOR ELIMINADA - NO SE DIBUJA
+
+        // 🔥 PARED DERECHA INTERIOR EXTENDIDA (de arriba a abajo completo)
+        for (let y = 1; y < this.rows - 1; y++) {
+            tiles[y][rightWall] = 1;  // Se extiende desde casi el techo hasta casi el piso
+        }
+
+        // TECHO Y PISO DEL RECTÁNGULO INTERIOR (solo donde corresponde)
+        for (let x = leftWall; x <= rightWall; x++) {
+            tiles[topPlatform][x] = 1;
+            tiles[bottomPlatform][x] = 1;
+        }
+
+        // PLATAFORMAS FLOTANTES (solo cerca de la pared derecha, ya que la izquierda no existe)
+        const floatingPlatforms = [
+            // Plataformas cerca de la pared derecha extendida
+            { x: rightWall - 4, y: topPlatform + 3, width: 3, height: 1 },
+            { x: rightWall - 4, y: topPlatform + 7, width: 3, height: 1 },
+            { x: rightWall - 4, y: bottomPlatform - 4, width: 3, height: 1 },
+            { x: rightWall - 4, y: bottomPlatform - 8, width: 3, height: 1 },
+            
+            // Algunas plataformas en el área central izquierda (sin pared que las limite)
+            { x: leftWall + 2, y: topPlatform + 5, width: 4, height: 1 },
+            { x: leftWall + 3, y: bottomPlatform - 6, width: 3, height: 1 }
+        ];
+
+        for (const platform of floatingPlatforms) {
+            for (let x = platform.x; x < platform.x + platform.width; x++) {
+                for (let y = platform.y; y < platform.y + platform.height; y++) {
+                    if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+                        tiles[y][x] = 1;
+                    }
+                }
+            }
+        }
+
+        // 🔥 ESCALERAS VERTICALES (solo en la pared derecha, ya que la izquierda no existe)
+        const ladderX = rightWall - 1;
+        for (let y = topPlatform + 1; y < bottomPlatform; y += 2) {
+            tiles[y][ladderX] = 1;
+        }
+
+        return tiles;
+    }
+
+
     setupControls() {
         this.keydownHandler = (e) => {
-            this.keys[e.key] = true;
+            this.keys[e.key] = this.keys[e.key.toLowerCase()] = this.keys[e.key.toUpperCase()] = true;
+            
+            // 🔥 DETECTAR ESC PARA PAUSAR/DESPAUSAR
+            if (e.key === 'Escape') {
+                if (this.isPaused) {
+                    this.unpause();
+                } else {
+                    this.pause();
+                }
+            }
         };
         
         this.keyupHandler = (e) => {
-            this.keys[e.key] = false;
+            this.keys[e.key] = this.keys[e.key.toLowerCase()] = this.keys[e.key.toUpperCase()] = false;
         };
         
         window.addEventListener('keydown', this.keydownHandler);
         window.addEventListener('keyup', this.keyupHandler);
+    }
+
+    // 🔥 MÉTODOS DE PAUSA
+    pause() {
+        this.isPaused = true;
+        console.log("⏸️ Nivel secreto pausado");
+    }
+
+    unpause() {
+        this.isPaused = false;
+        console.log("▶️ Nivel secreto reanudado");
     }
     
     initFogParticles() {
@@ -98,12 +246,12 @@ export class LevelSecret {
     
     getCurrentBackground() {
         switch(this.currentPhase) {
-            case 0: return "Ojo4"; // Oscuridad inicial
-            case 1: return "Ojo1"; // Niebla aparece
-            case 2: return "Ojo2"; // Niebla fuerte
-            case 3: return "Ojo3"; // Luz roja intensa
+            case 0: return "ojo4"; // Oscuridad inicial
+            case 1: return "ojo1"; // Niebla aparece
+            case 2: return "ojo2"; // Niebla fuerte
+            case 3: return "ojo3"; // Luz roja intensa
             case 4: return null;   // Blanco total
-            default: return "Ojo4";
+            default: return "ojo4";
         }
     }
     
@@ -117,62 +265,64 @@ export class LevelSecret {
         }
         
         // Verificar si pasamos a la siguiente fase
-        if (this.sequenceTimer >= accumulatedTime + this.phaseDurations[this.currentPhase]) {
+        if (this.currentPhase < this.phaseDurations.length && 
+            this.sequenceTimer >= accumulatedTime + this.phaseDurations[this.currentPhase]) {
             this.currentPhase++;
-            console.log(`📽️ Fase ${this.currentPhase}`);
+            console.log(`📽️ Fase ${this.currentPhase} | Tiempo total: ${this.sequenceTimer.toFixed(1)}s`);
         }
         
         // Calcular progreso dentro de la fase actual (0 a 1)
-        const phaseProgress = (this.sequenceTimer - accumulatedTime) / this.phaseDurations[this.currentPhase];
+        const phaseProgress = this.currentPhase < this.phaseDurations.length ? 
+            (this.sequenceTimer - accumulatedTime) / this.phaseDurations[this.currentPhase] : 1;
         
-        // Actualizar efectos según la fase
+        // 🔥 EFECTOS EXTENDIDOS Y MÁS GRADUALES
         switch(this.currentPhase) {
-            case 0: // Ojo4 - Oscuridad total, luz muy tenue
-                this.lightIntensity = 0.1 + phaseProgress * 0.1; // 0.1 a 0.2
+            case 0: // Ojo4 - Oscuridad total extendida
+                this.lightIntensity = 0.05 + phaseProgress * 0.1; // 0.05 a 0.15
                 this.fogIntensity = 0;
                 this.redLightIntensity = 0;
                 this.whiteIntensity = 0;
                 break;
                 
-            case 1: // Ojo1 - Niebla roja aparece, luz aumenta
-                this.lightIntensity = 0.2 + phaseProgress * 0.2; // 0.2 a 0.4
-                this.fogIntensity = phaseProgress * 0.3; // 0 a 0.3
-                this.redLightIntensity = phaseProgress * 0.2; // 0 a 0.2
+            case 1: // Ojo1 - Transición lenta a niebla
+                this.lightIntensity = 0.15 + phaseProgress * 0.2; // 0.15 a 0.35
+                this.fogIntensity = phaseProgress * 0.4; // 0 a 0.4
+                this.redLightIntensity = phaseProgress * 0.15; // 0 a 0.15
                 this.whiteIntensity = 0;
                 
-                // Activar partículas de niebla
+                // Activar partículas de niebla gradualmente
+                this.fogParticles.forEach(p => {
+                    p.alpha = Math.min(p.alpha + dt * 0.1, this.fogIntensity);
+                });
+                break;
+                
+            case 2: // Ojo2 - Desarrollo prolongado de ambiente
+                this.lightIntensity = 0.35 + phaseProgress * 0.25; // 0.35 a 0.6
+                this.fogIntensity = 0.4 + phaseProgress * 0.3; // 0.4 a 0.7
+                this.redLightIntensity = 0.15 + phaseProgress * 0.3; // 0.15 a 0.45
+                this.whiteIntensity = 0;
+                
+                this.fogParticles.forEach(p => {
+                    p.alpha = Math.min(p.alpha + dt * 0.2, this.fogIntensity);
+                });
+                break;
+                
+            case 3: // Ojo3 - Clímax extendido
+                this.lightIntensity = 0.6 + phaseProgress * 0.25; // 0.6 a 0.85
+                this.fogIntensity = 0.7 + phaseProgress * 0.2; // 0.7 a 0.9
+                this.redLightIntensity = 0.45 + phaseProgress * 0.4; // 0.45 a 0.85
+                this.whiteIntensity = phaseProgress * 0.3; // 0 a 0.3
+                
                 this.fogParticles.forEach(p => {
                     p.alpha = Math.min(p.alpha + dt * 0.3, this.fogIntensity);
                 });
                 break;
                 
-            case 2: // Ojo2 - Niebla fuerte, luz roja sangre
-                this.lightIntensity = 0.4 + phaseProgress * 0.2; // 0.4 a 0.6
-                this.fogIntensity = 0.3 + phaseProgress * 0.3; // 0.3 a 0.6
-                this.redLightIntensity = 0.2 + phaseProgress * 0.4; // 0.2 a 0.6
-                this.whiteIntensity = 0;
-                
-                this.fogParticles.forEach(p => {
-                    p.alpha = Math.min(p.alpha + dt * 0.5, this.fogIntensity);
-                });
-                break;
-                
-            case 3: // Ojo3 - Luz roja intensa, transición a blanco
-                this.lightIntensity = 0.6 + phaseProgress * 0.3; // 0.6 a 0.9
-                this.fogIntensity = 0.6 + phaseProgress * 0.2; // 0.6 a 0.8
-                this.redLightIntensity = 0.6 + phaseProgress * 0.3; // 0.6 a 0.9
-                this.whiteIntensity = phaseProgress * 0.5; // 0 a 0.5 (empieza a blanquear)
-                
-                this.fogParticles.forEach(p => {
-                    p.alpha = Math.min(p.alpha + dt, this.fogIntensity);
-                });
-                break;
-                
-            case 4: // Transición a blanco total
-                this.lightIntensity = 1;
-                this.fogIntensity = 1;
-                this.redLightIntensity = 1;
-                this.whiteIntensity = phaseProgress; // 0 a 1 (blanco total)
+            case 4: // Transición final extendida
+                this.lightIntensity = 0.85 + phaseProgress * 0.15; // 0.85 a 1.0
+                this.fogIntensity = 0.9 + phaseProgress * 0.1; // 0.9 a 1.0
+                this.redLightIntensity = 0.85 + phaseProgress * 0.15; // 0.85 a 1.0
+                this.whiteIntensity = 0.3 + phaseProgress * 0.7; // 0.3 a 1.0
                 
                 // Cuando llegue al blanco total, volver al menú
                 if (phaseProgress >= 0.95) {
@@ -195,7 +345,32 @@ export class LevelSecret {
         });
     }
     
+    // 🔥 PREVENIR CAÍDAS DE PERSONAJES
+    respawnPlayer(player) {
+        const spawnPositions = this.findSpawnPositions();
+        if (spawnPositions.length > 0) {
+            const spawn = spawnPositions[Math.floor(Math.random() * spawnPositions.length)];
+            player.x = spawn.x;
+            player.y = spawn.y;
+            player.vx = player.vy = 0;
+            player.canDash = true;
+            
+            const deathSound = Loader.get("Death");
+            if (deathSound) {
+                deathSound.currentTime = 0;
+                deathSound.volume = 0.5;
+                deathSound.play().catch(() => {});
+            }
+        }
+    }
+    
     update(dt) {
+        // 🔥 SI ESTÁ PAUSADO, SOLO ACTUALIZAR MENÚ DE PAUSA
+        if (this.isPaused) {
+            this.pauseMenu.update(dt);
+            return;
+        }
+        
         this.startMusic();
         
         // Actualizar secuencia cinematográfica
@@ -204,11 +379,17 @@ export class LevelSecret {
         // Actualizar partículas de niebla
         this.updateFogParticles(dt);
         
-        // Los jugadores no se mueven, solo aplicar gravedad
-        this.playerBlue.vy = 0;
-        this.playerRed.vy = 0;
-        this.playerBlue.vx = 0;
-        this.playerRed.vx = 0;
+        // Actualizar jugadores con controles
+        if (this.playerBlue.canMove) {
+            this.playerBlue.update(dt, this);
+        }
+        if (this.playerRed.canMove) {
+            this.playerRed.update(dt, this);
+        }
+        
+        // 🔥 PREVENIR CAÍDAS - RESPAWN SI CAEN FUERA DEL NIVEL
+        if (this.playerBlue.y > this.rows * this.tileSize) this.respawnPlayer(this.playerBlue);
+        if (this.playerRed.y > this.rows * this.tileSize) this.respawnPlayer(this.playerRed);
     }
     
     draw(ctx) {
@@ -224,10 +405,10 @@ export class LevelSecret {
                 
                 // Oscurecer según la fase
                 let darkness = 1;
-                if (this.currentPhase === 0) darkness = 0.2; // Muy oscuro
-                else if (this.currentPhase === 1) darkness = 0.4;
-                else if (this.currentPhase === 2) darkness = 0.6;
-                else if (this.currentPhase === 3) darkness = 0.8;
+                if (this.currentPhase === 0) darkness = 0.15; // Más oscuro inicial
+                else if (this.currentPhase === 1) darkness = 0.3;
+                else if (this.currentPhase === 2) darkness = 0.5;
+                else if (this.currentPhase === 3) darkness = 0.7;
                 
                 ctx.globalAlpha = darkness;
                 ctx.drawImage(bg, 0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -242,33 +423,40 @@ export class LevelSecret {
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         }
         
+        // 🔥 DIBUJAR PLATAFORMAS CON TEXTURA ROCA
+        const rockTexture = Loader.get("Rock");
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
+                if (this.tiles[y][x] === 1) {
+                    const tileX = x * this.tileSize;
+                    const tileY = y * this.tileSize;
+
+                    if (rockTexture && rockTexture.complete) {
+                        ctx.save();
+                        ctx.translate(tileX, tileY);
+                        const pattern = ctx.createPattern(rockTexture, "repeat");
+                        ctx.fillStyle = pattern;
+                        ctx.fillRect(0, 0, this.tileSize, this.tileSize);
+                        ctx.restore();
+
+                        // Bordes del tile
+                        ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
+                    } else {
+                        // Fallback si no carga la textura
+                        ctx.fillStyle = "#4a4a4a";
+                        ctx.fillRect(tileX, tileY, this.tileSize, this.tileSize);
+                    }
+                }
+            }
+        }
+        
         // Capa de oscuridad base
         ctx.fillStyle = `rgba(0, 0, 0, ${1 - this.lightIntensity})`;
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         
-        // Dibujar plataforma de roca
-        const rockTexture = Loader.get("Rock");
-        if (rockTexture && rockTexture.complete) {
-            const cols = Math.ceil(this.platform.w / 40);
-            const rows = Math.ceil(this.platform.h / 40);
-            
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const tileX = this.platform.x + (col * 40);
-                    const tileY = this.platform.y + (row * 40);
-                    
-                    ctx.save();
-                    ctx.translate(tileX, tileY);
-                    const pattern = ctx.createPattern(rockTexture, "repeat");
-                    ctx.fillStyle = pattern;
-                    ctx.fillRect(0, 0, 40, 40);
-                    ctx.restore();
-                }
-            }
-        } else {
-            ctx.fillStyle = "#222";
-            ctx.fillRect(this.platform.x, this.platform.y, this.platform.w, this.platform.h);
-        }
+        // 🔥 ELIMINADA PLATAFORMA CENTRAL DE ROCA
         
         // Luz tenue emanando de los jugadores
         const blueX = this.playerBlue.x + this.playerBlue.w / 2;
@@ -325,7 +513,12 @@ export class LevelSecret {
         // Indicador de fase (debug - opcional)
         ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
         ctx.font = "12px monospace";
-        ctx.fillText(`Fase: ${this.currentPhase + 1}/5 | Tiempo: ${this.sequenceTimer.toFixed(1)}s`, 10, 20);
+        ctx.fillText(`Fase: ${this.currentPhase + 1}/5 | Tiempo: ${this.sequenceTimer.toFixed(1)}s / 100s`, 10, 20);
+        
+        // 🔥 DIBUJAR MENÚ DE PAUSA SI ESTÁ PAUSADO
+        if (this.isPaused) {
+            this.pauseMenu.draw(ctx);
+        }
     }
     
     returnToMenu() {
@@ -346,11 +539,30 @@ export class LevelSecret {
         this.fogParticles.forEach(p => p.alpha = 0);
         this.stopMusic();
         this.musicStarted = false;
+        
+        // 🔥 RESETEAR A POSICIONES ALEATORIAS
+        const spawnPositions = this.findSpawnPositions();
+        if (spawnPositions.length >= 2) {
+            this.playerBlue.x = spawnPositions[0].x;
+            this.playerBlue.y = spawnPositions[0].y;
+            this.playerRed.x = spawnPositions[1].x;
+            this.playerRed.y = spawnPositions[1].y;
+        }
     }
     
     destroy() {
+        // 🔥 LIMPIAR EVENT LISTENERS DE PAUSA
+        window.removeEventListener('blur', () => this.pause());
+        window.removeEventListener('focus', () => this.unpause());
+        
         window.removeEventListener('keydown', this.keydownHandler);
         window.removeEventListener('keyup', this.keyupHandler);
+        
+        // 🔥 DESTRUIR MENÚ DE PAUSA
+        if (this.pauseMenu) {
+            this.pauseMenu.destroy();
+        }
+        
         this.stopMusic();
     }
 }
