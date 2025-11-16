@@ -116,11 +116,8 @@ const gameOverOptions = [
 
 // Créditos
 const credits = [
-  { role: "Director", name: "Tu Nombre" },
-  { role: "Programador", name: "Tu Nombre" },
-  { role: "Artista", name: "Nombre del Artista" },
-  { role: "Música", name: "Grimes" },
-  { role: "Inspirado en", name: "Nine Sols" }
+  { role: "Programadores", name: "Leandro Bravo y Andrés Pérez" },
+  { role: "Artista", name: "Leandro Braco y Andrés Pérez" },
 ];
 
 let selectedOption = 0;
@@ -134,7 +131,7 @@ async function init() {
   await Loader.loadAll();
 
   // Obtener assets del Loader
-  menuBG = Loader.get("Menu");
+  menuBG = Loader.get("MenuBG");
   menuMusic = Loader.get("MenuMusic");
 
   // Configurar música
