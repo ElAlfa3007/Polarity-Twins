@@ -203,11 +203,11 @@ export class Level3 {
             mp.time = (Math.PI / 4) * i;
         });
         
-        // Obstáculos giratorios (cajas balanceándose) - REUBICADOS para no bloquear
+        // Obstáculos giratorios (cajas balanceándose) - EXTREMADAMENTE LENTOS
         this.rotatingObstacles = [
-            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 1.8, 0),
-            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -2.0, Math.PI),
-            new RotatingObstacle(this.tileSize * 23.5, this.tileSize * 6, 45, 1.9, Math.PI / 2)
+            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 0.4, 0),
+            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -0.5, Math.PI),
+            new RotatingObstacle(this.tileSize * 23.5, this.tileSize * 6, 45, 0.3, Math.PI / 2)
         ];
         
         // Meta final
@@ -299,7 +299,7 @@ export class Level3 {
         }
         
         // Plataforma elevada para la caja (arriba a la izquierda) - UN BLOQUE MENOS
-        for (let x = 1; x <= 4; x++) tiles[10][x] = 1;
+        for (let x = 1; x <= 2; x++) tiles[9][x] = 1;
         
         // Plataforma de inicio para Blue (base) - UN BLOQUE MÁS ABAJO
         for (let x = 16; x <= 18; x++) tiles[15][x] = 1;
@@ -666,7 +666,7 @@ export class Level3 {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(barX, barY, barWidth, barHeight);
             
-            const energyPercent = this.playerBlue.energyTimer / 10.0;
+            const energyPercent = this.playerBlue.energyTimer / 30.0; // Cambiado a 30 segundos
             ctx.fillStyle = "#ffff00";
             ctx.fillRect(barX, barY, barWidth * energyPercent, barHeight);
             
@@ -841,11 +841,11 @@ export class Level3 {
             mp.time = (Math.PI / 4) * index;
         });
         
-        // Reiniciar obstáculos giratorios
+        // Reiniciar obstáculos giratorios - EXTREMADAMENTE LENTOS
         this.rotatingObstacles = [
-            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 1.8, 0),
-            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -2.0, Math.PI),
-            new RotatingObstacle(this.tileSize * 23.5, this.tileSize * 6, 45, 1.9, Math.PI / 2)
+            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 0.4, 0),
+            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -0.5, Math.PI),
+            new RotatingObstacle(this.tileSize * 23.5, this.tileSize * 6, 45, 0.3, Math.PI / 2)
         ];
         
         this.sparks = [];
