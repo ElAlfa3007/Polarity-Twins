@@ -107,6 +107,7 @@ export class Level3 {
     setupControls() {
         this.keydownHandler = (e) => {
             this.keys[e.key] = this.keys[e.key.toLowerCase()] = this.keys[e.key.toUpperCase()] = true;
+            if ((e.key === 'r' || e.key === 'R')) this.reset();
             if (e.key === 'Escape' && !this.showVictoryScreen) {
                 this.isPaused ? this.unpause() : this.pause();
             }

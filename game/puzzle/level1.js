@@ -102,6 +102,11 @@ export class Level1 {
         this.keydownHandler = (e) => {
             this.keys[e.key] = this.keys[e.key.toLowerCase()] = this.keys[e.key.toUpperCase()] = true;
             
+            // Detectar R para reiniciar en cualquier momento
+            if (e.key === 'r' || e.key === 'R') {
+                this.reset();
+            }
+            
             // Detectar ESC para pausar/despausar
             if (e.key === 'Escape' && !this.showVictoryScreen) {
                 if (this.isPaused) {
