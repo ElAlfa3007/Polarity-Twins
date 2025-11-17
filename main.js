@@ -254,11 +254,11 @@ function loadLevel(levelNum) {
           if (menuMusic) menuMusic.pause();
         })
         .catch(err => {
-          console.error("Level 2 no disponible aún");
-          alert("¡Nivel 2 próximamente!");
+          console.error("Error cargando Level 2:", err); // CAMBIO: Mostrar error completo
+          alert("Error al cargar Nivel 2: " + err.message);
           gameState.change("levelselect");
         });
-      return; // Salir temprano para esperar la carga asíncrona
+      return;
     case 3:
       // Importación dinámica de Level3
       import('./game/puzzle/level3.js')
@@ -268,11 +268,11 @@ function loadLevel(levelNum) {
           if (menuMusic) menuMusic.pause();
         })
         .catch(err => {
-          console.error("Level 3 no disponible aún");
-          alert("¡Nivel 3 próximamente!");
+          console.error("Error cargando Level 3:", err); // CAMBIO: Mostrar error completo
+          alert("Error al cargar Nivel 3: " + err.message);
           gameState.change("levelselect");
         });
-      return; // Salir temprano para esperar la carga asíncrona
+      return;
     default:
       console.error("Nivel no encontrado:", levelNum);
       currentLevel = new Level1();

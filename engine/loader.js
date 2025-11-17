@@ -68,10 +68,23 @@ const ASSET_LIST = [
     // Rock
     { type: "image", name: "Rock", src: "assets/imagen/rock.png" },
 
+    // Pradera
+    { type: "image", name: "Pradera", src: "assets/imagen/pradera.png" },
+
+    // Rosas
+    { type: "image", name: "Rose", src: "assets/imagen/rose.png" },
+
+    // Fuente
+    { type: "image", name: "Fuente", src: "assets/imagen/fuente.png" },
+
+    // Generador
+    { type: "image", name: "Gen", src: "assets/imagen/gen.png" },
+
     // Audio
     { type: "audio", name: "MenuMusic", src: "./assets/sonido/Grimes  Genesis.mp3" },
     { type: "audio", name: "Music1", src: "./assets/sonido/Fly.mp3" },
     { type: "audio", name: "Finish", src: "./assets/sonido/LegacyKiller.mp3" },
+    { type: "audio", name: "Radio", src: "./assets/sonido/Radio.mp3" },
 ];
 
 // Gestor de recursos (imágenes, audio, etc.)

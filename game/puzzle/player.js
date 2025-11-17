@@ -44,7 +44,24 @@ export class Player extends Entity {
         
         // Configurar controles según tipo de jugador
         this.setupControls();
+
+
+        // En el constructor de Player:
+        this.hasEnergy = false;
+        this.energyTimer = 0;
+        this.energyDelivered = false;
+
     }
+
+    updateEnergy(dt) {
+            if (this.hasEnergy && this.energyTimer > 0) {
+                this.energyTimer -= dt;
+                if (this.energyTimer <= 0) {
+                    this.hasEnergy = false;
+                    console.log(`${this.playerType} perdió la energía por tiempo`);
+                }
+            }
+        }
     
     setupControls() {
         if (this.playerType === "blue") {
@@ -381,6 +398,9 @@ export class Player extends Entity {
         
         // Actualizar carga de caja
         this.updateBoxCharge(dt);
+
+        //Actualizar energia
+        this.updateEnergy(dt);
         
         // Si no está en el suelo y no está en pared, está saltando
         if (!this.onGround && !this.onWall && !this.isDashing) {
@@ -403,6 +423,43 @@ export class Player extends Entity {
             if (Physics.checkCollision(this, level.wall)) {
                 Physics.resolveCollision(this, level.wall);
             }
+        }
+        if (!this.isDashing) {
+            Physics.applyGravity(this, dt);
+        }
+        
+        this.updateDash(dt);
+        this.handleInput(level.keys, level);
+        this.checkWallSlide(level);
+        
+        this.onGround = false;
+        Physics.move(this, dt);
+        
+        for (let solid of level.solids) {
+            if (Physics.checkCollision(this, solid)) {
+                Physics.resolveCollision(this, solid);
+                if (this.vy === 0 && this.y < solid.y) {
+                    this.onGround = true;
+                    this.canDash = true;
+                }
+            }
+        }
+        
+        // Colisión con la pared
+        if (level.wall && level.wall.isActive) {
+            if (Physics.checkCollision(this, level.wall)) {
+                Physics.resolveCollision(this, level.wall);
+            }
+        }
+        
+        this.updateAnimation(dt);
+        this.updateBoxCharge(dt);
+        
+        // AGREGAR ESTO:
+        this.updateEnergy(dt);
+        
+        if (!this.onGround && !this.onWall && !this.isDashing) {
+            this.currentState = "jump";
         }
     }
     
@@ -433,6 +490,14 @@ export class Player extends Entity {
             // Fallback: cuadrado de color
             ctx.fillStyle = this.playerType === "blue" ? "#4bd" : "#f44";
             ctx.fillRect(this.x, this.y, this.w, this.h);
+        }
+        if (this.hasEnergy) {
+            ctx.save();
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#ffff00";
+            ctx.fillStyle = "rgba(255, 255, 0, 0.3)";
+            ctx.fillRect(this.x - 8, this.y - 8, this.w + 16, this.h + 16);
+            ctx.restore();
         }
     }
     
