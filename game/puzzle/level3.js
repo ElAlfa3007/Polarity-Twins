@@ -299,7 +299,7 @@ export class Level3 {
         }
         
         // Plataforma elevada para la caja (arriba a la izquierda) - UN BLOQUE MENOS
-        for (let x = 1; x <= 2; x++) tiles[9][x] = 1;
+        for (let x = 1; x <= 4; x++) tiles[9][x] = 1;
         
         // Plataforma de inicio para Blue (base) - UN BLOQUE MÁS ABAJO
         for (let x = 16; x <= 18; x++) tiles[15][x] = 1;
