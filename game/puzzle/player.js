@@ -7,7 +7,7 @@ export class Player extends Entity {
         super(x, y, 32, 32);
         this.playerType = playerType; // "blue" o "red"
         this.jumpForce = -420;
-        this.speed = 200;
+        this.speed = 124;
         this.onGround = false;
         
         // Sistema de animación
