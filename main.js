@@ -140,7 +140,7 @@ const gameOverOptions = [
 // Créditos
 const credits = [
   { role: "Programadores", name: "Leandro Bravo y Andrés Pérez" },
-  { role: "Artista", name: "Leandro Bravo y Andrés Pérez" },
+  { role: "Artistas", name: "Leandro Bravo y Andrés Pérez" },
 ];
 
 let selectedOption = 0;

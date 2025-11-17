@@ -1,6 +1,6 @@
-# 📚 GUÍA DE PROYECTO - Polarity Twins
+# GUÍA DE PROYECTO - Polarity Twins
 
-## 🎮 ¿Qué es este proyecto?
+## ¿Qué es este proyecto?
 
 **Polarity Twins** es un juego de plataforma cooperativo en 2D donde dos jugadores (Azul y Rojo) deben colaborar para resolver puzzles basados en:
 
@@ -11,9 +11,9 @@
 
 ---
 
-## 📂 Estructura de Carpetas
+## Estructura de Carpetas
 
-### 🏠 Raíz del Proyecto
+### Raíz del Proyecto
 ```
 exam_project_BravoPerez/
 ├── index.html              ← Entrada principal (versión completa)
@@ -25,7 +25,7 @@ exam_project_BravoPerez/
 └── CHANGELOG.md            ← Este archivo
 ```
 
-### 📦 /engine - Motor del Juego
+### /engine - Motor del Juego
 ```
 engine/
 ├── loader.js               ← Preloader de 60+ assets
@@ -33,7 +33,7 @@ engine/
 └── stateManager.js         ← Gestor de estados
 ```
 
-### 🎮 /game/puzzle - Niveles y Mecánicas
+### /game/puzzle - Niveles y Mecánicas
 ```
 game/puzzle/
 ├── level1.js               ← Nivel 1 (tutorial)
@@ -49,14 +49,14 @@ game/puzzle/
 └── secret.js               ← Nivel secreto
 ```
 
-### 🌐 /net - Networking (Futuro)
+### /net - Networking (Futuro)
 ```
 net/
 ├── service-worker.js       ← Service Worker para offline
 └── ws-client.js            ← Cliente WebSocket (preparado)
 ```
 
-### 🎨 /assets - Recursos
+### /assets - Recursos
 ```
 assets/
 ├── imagen/                 ← 60+ sprites y backgrounds
@@ -72,7 +72,7 @@ assets/
     └── ...
 ```
 
-### 🚀 /build - Build Autocontendido
+### /build - Build Autocontendido
 ```
 build/
 ├── index.html              ← Todo embebido en un archivo (~800 líneas)
@@ -83,7 +83,7 @@ build/
 
 ---
 
-## 🎯 Archivos Clave Explicados
+## Archivos Clave Explicados
 
 ### 1. **main.js** (856 líneas)
 El corazón del juego:
@@ -135,7 +135,7 @@ PWA offline:
 
 ---
 
-## 🎮 Flujo de Juego
+## Flujo de Juego
 
 ```
 1. MAIN MENU
@@ -159,7 +159,7 @@ PWA offline:
 
 ---
 
-## 🔧 Configuración Técnica
+## Configuración Técnica
 
 | Parámetro | Valor |
 |-----------|-------|
@@ -177,7 +177,7 @@ PWA offline:
 
 ---
 
-## 🎨 Assets
+## Assets
 
 ### Sprites (60+)
 - **Blue Player**: 10 frames (idle, run, jump, dash, hang)
@@ -194,7 +194,7 @@ PWA offline:
 
 ---
 
-## 🚀 Cómo Ejecutar
+## Cómo Ejecutar
 
 ### Versión Completa (desde raíz)
 ```bash
@@ -211,7 +211,7 @@ python -m http.server 8000
 
 ---
 
-## 🐛 Debugging
+## Debugging
 
 ### Ver logs de carga
 Abre consola (F12) y presiona C/L:
@@ -229,7 +229,7 @@ currentLevel     // Nivel actual o null
 
 ---
 
-## 📊 Estadísticas
+## Estadísticas
 
 | Métrica | Cantidad |
 |---------|----------|
@@ -242,7 +242,7 @@ currentLevel     // Nivel actual o null
 
 ---
 
-## 🎯 Roadmap Futuro
+## Roadmap Futuro
 
 - [ ] Level 3 completo
 - [ ] 5+ niveles adicionales
@@ -255,7 +255,7 @@ currentLevel     // Nivel actual o null
 
 ---
 
-## 💡 Consejos de Desarrollo
+## Consejos de Desarrollo
 
 ### Agregar un nuevo nivel
 1. Copia `game/puzzle/level1.js`
@@ -276,7 +276,7 @@ ctx.strokeRect(entity.x, entity.y, entity.w, entity.h);
 
 ---
 
-## 📝 Notas Finales
+## Notas Finales
 
 - El código está comentado en español/inglés
 - Usa ES6 modules (import/export)
@@ -285,5 +285,3 @@ ctx.strokeRect(entity.x, entity.y, entity.w, entity.h);
 - Service Worker maneja todo offline
 
 ---
-
-**Happy Coding! 🎮✨**

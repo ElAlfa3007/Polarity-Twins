@@ -1,6 +1,6 @@
-# Examen Final — Juego de Plataforma Cooperativo
+# Examen Final — Juego de Plataforma Cooperativo (POLARITY TWINS)
 
-## 🎮 Descripción
+## Descripción
 
 **Polarity Twins** es un juego de plataforma cooperativo en tiempo real donde dos jugadores (Azul y Rojo) deben trabajar juntos para resolver puzzles basados en mecánicas de carga de cajas, generadores y temporizadores.
 
@@ -17,7 +17,7 @@
 
 ---
 
-## 🎮 Cambios Realizados (Último Parche)
+## Cambios Realizados (Último Parche)
 
 ### 1. **Mecánica de Carga de Cajas (Implementada)**
 - ✅ **Presiona C (Blue) o L (Red)** para cargar cajas del mismo color
@@ -67,7 +67,7 @@
 
 ---
 
-## ⌨️ Controles Completos
+## Controles Completos
 
 ### Jugador Azul (Flechas + F/C)
 | Acción | Tecla |
@@ -98,7 +98,7 @@
 
 ---
 
-## 🚀 Cómo Ejecutar
+## Cómo Ejecutar
 
 ### Opción A: Servidor Local (RECOMENDADO)
 
@@ -131,20 +131,6 @@ npx http-server
 
 ---
 
-## 🎯 Cómo Jugar Level 2
-
-### Objetivo
-Ambos jugadores deben llegar a sus zonas de carga simultáneamente mientras los generadores están activados durante 60 segundos.
-
-### Pasos para Ganar
-
-1. **Presiona los botones** caminando sobre ellos
-2. **Carga cajas sobre botones** presionando C (Red) o L (Blue)
-3. **Espera a que ambos generadores se enciendan** (se vuelven verdes)
-4. **Sube a las zonas de carga** (arriba en las plataformas altas)
-5. **Mantén a ambos jugadores en las zonas** mientras el temporizador cuenta hacia 0
-6. **¡Victoria!** cuando ambos temporizadores lleguen a 0
-
 ### Estrategia
 - Las cajas azules solo las puede cargar el jugador azul
 - Las cajas rojas solo las puede cargar el jugador rojo
@@ -154,7 +140,7 @@ Ambos jugadores deben llegar a sus zonas de carga simultáneamente mientras los 
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 exam_project_BravoPerez/
@@ -227,7 +213,7 @@ exam_project_BravoPerez/
 
 ---
 
-## 🔧 Configuración Técnica
+## Configuración Técnica
 
 | Parámetro | Valor |
 |-----------|-------|
@@ -246,7 +232,7 @@ exam_project_BravoPerez/
 
 ---
 
-## 📊 Estadísticas del Código
+## Estadísticas del Código
 
 | Archivo | Líneas | Propósito |
 |---------|--------|-----------|
@@ -262,7 +248,7 @@ exam_project_BravoPerez/
 
 ---
 
-## 🎨 Assets Incluidos
+## Assets Incluidos
 
 ### Sprites
 - **Blue player**: 10 frames (idle, run, jump, dash, hang)
@@ -281,7 +267,7 @@ exam_project_BravoPerez/
 
 ---
 
-## 🐛 Debugging
+## Debugging
 
 ### Ver logs de carga de cajas
 ```javascript
@@ -297,7 +283,7 @@ exam_project_BravoPerez/
 
 ---
 
-## 📝 Notas de Desarrollo
+## Notas de Desarrollo
 
 - **Service Worker v5**: Actualizado para forzar refresh de cache
 - **Física simplificada**: AABB collisions, no uso de physics engine externo
@@ -307,7 +293,7 @@ exam_project_BravoPerez/
 
 ---
 
-## 🎯 Próximas Mejoras Planeadas
+## Próximas Mejoras Planeadas
 
 - [ ] Multijugador online (WebSocket preparado)
 - [ ] Nivel 3 completo
@@ -318,16 +304,19 @@ exam_project_BravoPerez/
 
 ---
 
-## 📜 Créditos
+## Créditos
 
 - **Programadores**: Leandro Bravo y Andrés Pérez
-- **Artista**: Leandro Bravo y Andrés Pérez
+- **Artistas**: Leandro Bravo y Andrés Pérez
 - **Motor**: Canvas 2D HTML5 + JavaScript ES6
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Proyecto educativo (Examen Final)
 
-Enjoy! 🎮✨
+Bravo Leandro (leandro.bravo@epn.edu.ec)
+Pérez Andrés (andres.perez04@epn.edu.ec)
+
+Enjoy!
