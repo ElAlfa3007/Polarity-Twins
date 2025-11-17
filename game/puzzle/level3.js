@@ -160,7 +160,7 @@ export class Level3 {
         
         // Caja para Red (arriba en plataforma elevada)
         this.boxes = [
-            new Box(this.tileSize * 2, this.tileSize * 8, "red")
+            new Box(this.tileSize * 2.5, this.tileSize * 8, "red")
         ];
         
         // Zona objetivo para la caja (trigger para activar fuentes)
@@ -298,7 +298,7 @@ export class Level3 {
         }
         
         // Plataforma elevada para la caja (arriba a la izquierda) - UN BLOQUE MENOS
-        for (let x = 1; x <= 3; x++) tiles[9][x] = 1;
+        for (let x = 1; x <= 3.5; x++) tiles[9][x] = 1;
         
         // Plataforma de inicio para Blue (base) - UN BLOQUE MÁS ABAJO
         for (let x = 16; x <= 18; x++) tiles[15][x] = 1;
