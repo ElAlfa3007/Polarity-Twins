@@ -205,8 +205,8 @@ export class Level3 {
         
         // Obstáculos giratorios (cajas balanceándose) - EXTREMADAMENTE LENTOS
         this.rotatingObstacles = [
-            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 0.4, 0),
-            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -0.5, Math.PI),
+            new RotatingObstacle(this.tileSize * 16, this.tileSize * 12, 45, 0.4, 0),
+            new RotatingObstacle(this.tileSize * 19, this.tileSize * 8, 40, -0.5, Math.PI),
         ];
         
         // Meta final
