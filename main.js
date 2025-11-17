@@ -4,6 +4,28 @@ import { StateManager } from "./engine/stateManager.js";
 import { Level1 } from "./game/puzzle/level1.js";
 // Nota: Level2 y Level3 se cargarán dinámicamente cuando existan
 
+// ============================================
+// SISTEMA DE CURSOR CUSTOMIZADO
+// ============================================
+const cursorSVG = document.getElementById('cursor');
+let isHoveringButton = false;
+
+document.addEventListener('mousemove', (e) => {
+  if (cursorSVG) {
+    cursorSVG.style.left = (e.clientX - 20) + 'px';
+    cursorSVG.style.top = (e.clientY - 20) + 'px';
+  }
+});
+
+// Detectar hover sobre botones del menú
+document.addEventListener('mouseover', (e) => {
+  if (e.target === canvas || e.target.closest('#game')) {
+    isHoveringButton = false;
+    if (cursorSVG) cursorSVG.classList.remove('hover');
+  }
+}, true);
+
+// ============================================
 // Nivel actual
 let currentLevel = null;
 let currentLevelNumber = 1;
@@ -388,17 +410,17 @@ function drawMenu() {
   
   // Sombra del título
   ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-  ctx.fillText("EXAMEN", 60, 140);
-  ctx.fillText("FINAL", 60, 210);
+  ctx.fillText("POLARITY", 60, 140);
+  ctx.fillText("TWINS", 60, 210);
   
   // Título principal
   ctx.fillStyle = "#f4e4c1";
   ctx.strokeStyle = "#8b6914";
   ctx.lineWidth = 3;
-  ctx.strokeText("EXAMEN", 56, 136);
-  ctx.fillText("EXAMEN", 56, 136);
-  ctx.strokeText("FINAL", 56, 206);
-  ctx.fillText("FINAL", 56, 206);
+  ctx.strokeText("POLARITY", 56, 136);
+  ctx.fillText("POLARITY", 56, 136);
+  ctx.strokeText("TWINS", 56, 206);
+  ctx.fillText("TWINS", 56, 206);
   
   ctx.restore();
   
@@ -578,9 +600,9 @@ function drawCredits() {
 // INPUT: Mouse
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
-  mouseX = e.clientX - rect.left;
-  mouseY = e.clientY - rect.top;
-  
+  const mouseX = (e.clientX - rect.left) / rect.width * canvas.width;
+  const mouseY = (e.clientY - rect.top) / rect.height * canvas.height;
+
   // Detectar hover sobre opciones
   if (gameState.state === "menu") {
     const startY = canvas.height / 2 + 100;
@@ -593,8 +615,10 @@ canvas.addEventListener('mousemove', (e) => {
           mouseY > y - 20 && mouseY < y + 20 && 
           option.enabled) {
         optionHover = i;
+        if (cursorSVG) cursorSVG.classList.add('hover');
       }
     });
+    if (optionHover === -1 && cursorSVG) cursorSVG.classList.remove('hover');
   } else if (gameState.state === "levelselect") {
     const startY = 250;
     const spacing = 80;
@@ -604,8 +628,10 @@ canvas.addEventListener('mousemove', (e) => {
       const y = startY + i * spacing;
       if (mouseY > y - 20 && mouseY < y + 20) {
         optionHover = i;
+        if (cursorSVG) cursorSVG.classList.add('hover');
       }
     });
+    if (optionHover === -1 && cursorSVG) cursorSVG.classList.remove('hover');
   } else if (gameState.state === "gameover") {
     const startY = canvas.height / 2 + 50;
     const spacing = 60;
@@ -615,8 +641,12 @@ canvas.addEventListener('mousemove', (e) => {
       const y = startY + i * spacing;
       if (mouseY > y - 20 && mouseY < y + 20) {
         optionHover = i;
+        if (cursorSVG) cursorSVG.classList.add('hover');
       }
     });
+    if (optionHover === -1 && cursorSVG) cursorSVG.classList.remove('hover');
+  } else {
+    if (cursorSVG) cursorSVG.classList.remove('hover');
   }
 });
 
@@ -721,8 +751,14 @@ document.addEventListener("keydown", e => {
     gameState.change("menu");
   }
   
-  if (e.key === "r" && gameState.state === "gameover") {
-    handleGameOverAction("retry");
+  // R para reintentar (durante juego o game over)
+  if ((e.key === "r" || e.key === "R") && (gameState.state === "gameover" || gameState.state === "game")) {
+    if (gameState.state === "gameover") {
+      handleGameOverAction("retry");
+    } else if (gameState.state === "game" && currentLevel && currentLevel.reset) {
+      // Durante el juego, reiniciar nivel sin ir a game over
+      currentLevel.reset();
+    }
   }
 });
 
@@ -745,6 +781,13 @@ window.game = {
     }
   }
 };
+
+// Registrar Service Worker para offline y precarga
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./net/service-worker.js')
+    .then(reg => console.log('✓ Service Worker registrado'))
+    .catch(err => console.warn('Service Worker no disponible:', err));
+}
 
 let secretCode = "";
 let secretCodeTarget = "nine";

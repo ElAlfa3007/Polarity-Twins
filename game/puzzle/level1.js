@@ -352,8 +352,14 @@ export class Level1 {
         
         if (blueAtGoal && redAtGoal && !this.levelComplete) {
             this.levelComplete = true;
-            this.showVictoryScreen = true;
-            console.log("🎉 ¡NIVEL COMPLETADO!");
+            console.log("🎉 ¡NIVEL COMPLETADO! Cargando siguiente nivel...");
+            // Dar un pequeño retardo para que los jugadores vean la meta
+            this.stopMusic();
+            setTimeout(() => {
+                if (window.game && window.game.loadLevel) {
+                    window.game.loadLevel(2);
+                }
+            }, 700);
         }
     }
 
@@ -472,13 +478,13 @@ export class Level1 {
         ctx.fillText("JUGADOR AZUL (Flechas):", 20, 30);
         ctx.fillStyle = "#fff";
         ctx.font = "12px Arial";
-        ctx.fillText("←/→ - Mover | ↑ - Saltar | - - Dash | ↓ - Caer", 20, 50);
+        ctx.fillText("←/→ - Mover | ↑ - Saltar | ↓ - Caer", 20, 50);
         ctx.fillStyle = "#ff0044";
         ctx.font = "bold 14px Arial";
         ctx.fillText("JUGADOR ROJO (WASD+E):", 20, 75);
         ctx.fillStyle = "#fff";
         ctx.font = "12px Arial";
-        ctx.fillText("A/D - Mover | W - Saltar | E - Dash | S - Caer", 20, 95);
+        ctx.fillText("A/D - Mover | W - Saltar | S - Caer", 20, 95);
         ctx.fillStyle = "#ffff00";
         ctx.font = "11px Arial";
         ctx.fillText("¡Coloquen las cajas CERCA de sus botones!", 20, 115);

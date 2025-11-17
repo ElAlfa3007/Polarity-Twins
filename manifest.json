@@ -1,0 +1,36 @@
+{
+  "name": "Examen Final - Juego Cooperativo",
+  "short_name": "Examen Final",
+  "description": "Juego de plataforma cooperativo con dos personajes sincronizados",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0f0f10",
+  "theme_color": "#ff6600",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22><rect fill=%22%230f0f10%22 width=%22192%22 height=%22192%22/><circle cx=%2296%22 cy=%2296%22 r=%2280%22 fill=%22%23ff6600%22/><circle cx=%2296%22 cy=%2296%22 r=%2260%22 fill=%22%230f0f10%22/><circle cx=%2296%22 cy=%2296%22 r=%2240%22 fill=%22%23ff6600%22/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 540 720%22><rect fill=%22%230f0f10%22 width=%22540%22 height=%22720%22/><text x=%22270%22 y=%22360%22 font-size=%2248%22 fill=%22%23ff6600%22 text-anchor=%22middle%22>Examen Final</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["games"],
+  "shortcuts": [
+    {
+      "name": "Iniciar Juego",
+      "short_name": "Jugar",
+      "description": "Inicia una nueva partida",
+      "url": "/?start=true",
+      "icons": []
+    }
+  ]
+}

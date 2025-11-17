@@ -86,7 +86,7 @@ export const Physics = {
         if (pTarget !== 0) polarityFactor = -pSource * pTarget;
 
         // force magnitude (inverse-square), scaled by source.strength
-        const forceMag = (source.strength * polarityFactor) / (dist2 + MAG_EPS);
+        const forceMag = (source.strength * polarityFactor) / (dist2 + this.MAG_EPS);
 
         // direction normalized
         const nx = dx / (dist || 1);
@@ -98,14 +98,45 @@ export const Physics = {
         let ay = (forceMag * ny) / mass;
 
         // clamp to avoid explosions
-        if (ax > MAG_CLAMP) ax = MAG_CLAMP;
-        if (ax < -MAG_CLAMP) ax = -MAG_CLAMP;
-        if (ay > MAG_CLAMP) ay = MAG_CLAMP;
-        if (ay < -MAG_CLAMP) ay = -MAG_CLAMP;
+        if (ax > this.MAG_CLAMP) ax = this.MAG_CLAMP;
+        if (ax < -this.MAG_CLAMP) ax = -this.MAG_CLAMP;
+        if (ay > this.MAG_CLAMP) ay = this.MAG_CLAMP;
+        if (ay < -this.MAG_CLAMP) ay = -this.MAG_CLAMP;
 
         // integrate velocity
         target.vx += ax * dt;
         target.vy += ay * dt;
+    },
+
+    // Aplicar fuerza de dash al jugador
+    applyDashForce(player, dt) {
+        if (!player.isDashing) return;
+        
+        // Aplicar velocidad de dash basada en dirección
+        player.vx = player.dashDirection.x * player.dashSpeed;
+        player.vy = player.dashDirection.y * player.dashSpeed;
+    },
+
+    // Aplicar fuerza de carry (carga) a la caja
+    applyCarryForce(box, direction, dt) {
+        if (!box) return;
+        
+        // Movimiento constante en la dirección especificada
+        const carrySpeed = 400; // píxeles por segundo
+        box.vx = direction * carrySpeed;
+        
+        // Aplicar fricción para que se ralentice naturalmente
+        box.vx *= this.friction;
+        
+        // Las cajas no deben tomar demasiada velocidad vertical mientras se cargan
+        // (mantienen su velocidad vertical normal por gravedad)
+    },
+
+    // Detener movimiento de carga
+    stopCarryForce(box) {
+        if (!box) return;
+        // Reducir velocidad gradualmente
+        box.vx *= 0.9;
     },
 
 

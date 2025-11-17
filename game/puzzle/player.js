@@ -27,6 +27,15 @@ export class Player extends Entity {
         this.dashCooldown = 0.3; // Cooldown después del dash
         this.dashCooldownTimer = 0;
         
+        // Sistema de carga de caja
+        this.isChargingBox = false;
+        this.chargeTimer = 0;
+        this.chargeDuration = 5.0; // 5 segundos de carga
+        this.chargeReloadDuration = 5.0; // 5 segundos de cooldown
+        this.chargeReloadTimer = 0;
+        this.chargeColor = this.playerType; // "blue" o "red"
+        this.chargedBox = null; // Referencia a la caja cargada
+        
         // Sistema de wall sliding (como Celeste)
         this.onWall = false;
         this.wallDirection = 0; // -1 izquierda, 1 derecha
@@ -39,27 +48,29 @@ export class Player extends Entity {
     
     setupControls() {
         if (this.playerType === "blue") {
-            // Blue usa flechas + guion para dash
+            // Blue usa flechas + K para dash, L para cargar
             this.controls = {
                 left: "ArrowLeft",
                 right: "ArrowRight",
                 jump: "ArrowUp",
-                dash: "-",
-                fastFall: "ArrowDown"
+                dash: "k",
+                fastFall: "ArrowDown",
+                charge: "l"
             };
         } else {
-            // Red usa WASD + E para dash
+            // Red usa WASD + F para dash, C para cargar
             this.controls = {
                 left: "a",
                 right: "d",
                 jump: "w",
-                dash: "e",
-                fastFall: "s"
+                dash: "f",
+                fastFall: "s",
+                charge: "c"
             };
         }
     }
     
-    handleInput(keys) {
+    handleInput(keys, level) {
         // No permitir control durante dash
         if (this.isDashing) return;
         
@@ -115,11 +126,53 @@ export class Player extends Entity {
             }
         }
         
-        // Dash (E para Red, - para Blue)
+        // M para Dash
         if ((keys[this.controls.dash] || keys[this.controls.dash.toUpperCase()]) && 
             this.canDash && !this.isDashing && this.dashCooldownTimer <= 0) {
             this.startDash(keys);
         }
+        
+        // Cargar Caja (presionar y mantener para cargar)
+        if (keys[this.controls.charge] || keys[this.controls.charge.toUpperCase()]) {
+            // Si no está cargando, intentar cargar
+            if (!this.isChargingBox && this.chargeReloadTimer <= 0) {
+                this.attemptChargeBox(level);
+            }
+        } else {
+            // Soltar clave - detener carga
+            if (this.isChargingBox) {
+                this.isChargingBox = false;
+                // La caja seguirá moviendo por el tiempo restante en updateBoxCharge
+            }
+        }
+    }
+    
+    attemptChargeBox(level) {
+        // Buscar cajas del mismo color cercanas
+        if (!level || !level.boxes) {
+            console.warn("Level o boxes no disponibles");
+            return;
+        }
+        
+        const boxes = level.boxes;
+        const detectionRange = 120; // Rango de detección
+        
+        for (let box of boxes) {
+            if (box.color === this.playerType) {
+                const dx = (box.x + box.w/2) - (this.x + this.w/2);
+                const dy = (box.y + box.h/2) - (this.y + this.h/2);
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < detectionRange) {
+                    this.isChargingBox = true;
+                    this.chargedBox = box;
+                    this.chargeTimer = this.chargeDuration; // Iniciar con tiempo completo
+                    console.log(`${this.playerType} cargando caja a distancia ${distance.toFixed(0)}px`);
+                    return;
+                }
+            }
+        }
+        console.log(`${this.playerType} - Sin cajas cercanas para cargar`);
     }
     
     startDash(keys) {
@@ -302,7 +355,7 @@ export class Player extends Entity {
         this.updateDash(dt);
         
         // Movimiento por inputs
-        this.handleInput(level.keys);
+        this.handleInput(level.keys, level);
         
         // Verificar wall slide
         this.checkWallSlide(level);
@@ -325,6 +378,9 @@ export class Player extends Entity {
         
         // Actualizar animación
         this.updateAnimation(dt);
+        
+        // Actualizar carga de caja
+        this.updateBoxCharge(dt);
         
         // Si no está en el suelo y no está en pared, está saltando
         if (!this.onGround && !this.onWall && !this.isDashing) {
@@ -377,6 +433,59 @@ export class Player extends Entity {
             // Fallback: cuadrado de color
             ctx.fillStyle = this.playerType === "blue" ? "#4bd" : "#f44";
             ctx.fillRect(this.x, this.y, this.w, this.h);
+        }
+    }
+    
+    updateBoxCharge(dt) {
+        // Actualizar timer de recarga (cooldown después de soltar)
+        if (this.chargeReloadTimer > 0) {
+            this.chargeReloadTimer -= dt;
+        }
+        
+        // Si está activamente cargando (presionando botón)
+        if (this.isChargingBox && this.chargedBox) {
+            // Decrementar timer
+            this.chargeTimer -= dt;
+            
+            // Marcar caja como siendo cargada
+            this.chargedBox.isBeingCharged = true;
+            
+            // Aplicar fuerza de carry
+            const direction = this.facingRight ? 1 : -1;
+            Physics.applyCarryForce(this.chargedBox, direction, dt);
+            
+            // Efecto visual
+            this.chargedBox.isCharged = true;
+            this.chargedBox.chargeTimer = Math.max(0, this.chargeTimer);
+            
+            // Si se acabó el tiempo, soltar
+            if (this.chargeTimer <= 0) {
+                this.isChargingBox = false;
+                this.chargeReloadTimer = this.chargeReloadDuration;
+            }
+        } else if (this.chargedBox && this.chargeTimer > 0) {
+            // Caja sigue moviéndose aunque soltaste el botón
+            this.chargeTimer -= dt;
+            this.chargedBox.isBeingCharged = true;
+            const direction = this.facingRight ? 1 : -1;
+            Physics.applyCarryForce(this.chargedBox, direction, dt);
+            this.chargedBox.isCharged = true;
+            this.chargedBox.chargeTimer = Math.max(0, this.chargeTimer);
+            
+            if (this.chargeTimer <= 0) {
+                Physics.stopCarryForce(this.chargedBox);
+                this.chargedBox.isCharged = false;
+                this.chargedBox.isBeingCharged = false;
+                this.chargedBox = null;
+            }
+        } else {
+            // Limpiar
+            if (this.chargedBox) {
+                Physics.stopCarryForce(this.chargedBox);
+                this.chargedBox.isCharged = false;
+                this.chargedBox.isBeingCharged = false;
+                this.chargedBox = null;
+            }
         }
     }
 }

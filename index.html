@@ -3,10 +3,52 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f10">
+    <meta name="description" content="Examen Final - Juego de plataforma cooperativo">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Examen Final — HTML5 Game</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%230f0f10%22 width=%22100%22 height=%22100%22/><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23ff6600%22/></svg>">
+    <style>
+      /* Cursor customizado invisible por defecto */
+      html, body {
+        cursor: none;
+      }
+      
+      /* Div para el cursor custom */
+      #cursor {
+        position: fixed;
+        width: 40px;
+        height: 40px;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.9;
+      }
+      
+      #cursor.hover {
+        filter: drop-shadow(0 0 8px #ffd700);
+      }
+    </style>
   </head>
   <body>
+    <!-- Cursor customizado (metálico, normal) -->
+    <svg id="cursor" width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="metalGrad" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stop-color="#f6f7f8" />
+          <stop offset="40%" stop-color="#d1d5d9" />
+          <stop offset="100%" stop-color="#9aa0a6" />
+        </radialGradient>
+      </defs>
+      <!-- Núcleo metálico simple -->
+      <g>
+        <circle cx="20" cy="20" r="10" fill="url(#metalGrad)" stroke="#7f858a" stroke-width="1" />
+        <!-- Anillo exterior sutil -->
+        <circle cx="20" cy="20" r="16" fill="none" stroke="#7f858a" stroke-width="1" opacity="0.6" />
+      </g>
+    </svg>
 
     <canvas id="game" width="1080" height="720"></canvas>
     <script type="module" src="./main.js"></script>

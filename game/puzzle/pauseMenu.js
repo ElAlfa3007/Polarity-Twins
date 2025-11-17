@@ -40,7 +40,12 @@ export class PauseMenu {
         if (!this.level.isPaused) return;
         
         const rect = this.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
+        
+        // Convertir a coordenadas del canvas (1080x720)
+        const canvasX = (mouseX / rect.width) * this.canvas.width;
+        const canvasY = (mouseY / rect.height) * this.canvas.height;
         
         const startY = this.canvas.height / 2 + 50;
         const spacing = 60;
@@ -48,10 +53,21 @@ export class PauseMenu {
         
         this.options.forEach((option, i) => {
             const y = startY + i * spacing;
-            if (mouseY > y - 20 && mouseY < y + 20) {
+            // Usar la mitad del canvas de ancho como zona de clickeo
+            if (canvasX > this.canvas.width / 2 - 200 && canvasX < this.canvas.width / 2 + 200 &&
+                canvasY > y - 25 && canvasY < y + 25) {
                 this.optionHover = i;
+                // Activar hover del cursor custom
+                const cursorSVG = document.getElementById('cursor');
+                if (cursorSVG) cursorSVG.classList.add('hover');
             }
         });
+        
+        // Desactivar hover si no está sobre ninguna opción
+        if (this.optionHover === -1) {
+            const cursorSVG = document.getElementById('cursor');
+            if (cursorSVG) cursorSVG.classList.remove('hover');
+        }
     }
     
     handleClick() {
