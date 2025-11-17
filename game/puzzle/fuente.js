@@ -9,7 +9,7 @@ export class Fuente extends Entity {
         this.isActive = true;
         
         // Sistema de energía
-        this.energyDuration = 10.0; // 10 segundos de energía
+        this.energyDuration = 35.0; // 10 segundos de energía
         this.detectionRange = 60; // Rango de detección del jugador
         
         // Animación

@@ -160,7 +160,7 @@ export class Level3 {
         
         // Caja para Red (arriba en plataforma elevada)
         this.boxes = [
-            new Box(this.tileSize * 2, this.tileSize * 8, "red")
+            new Box(this.tileSize * 2.5, this.tileSize * 8, "red")
         ];
         
         // Zona objetivo para la caja (trigger para activar fuentes)
@@ -203,11 +203,10 @@ export class Level3 {
             mp.time = (Math.PI / 4) * i;
         });
         
-        // Obstáculos giratorios (cajas balanceándose) - REUBICADOS para no bloquear
+        // Obstáculos giratorios (cajas balanceándose) - MUY LENTOS
         this.rotatingObstacles = [
-            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 1.8, 0),
-            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -2.0, Math.PI),
-            new RotatingObstacle(this.tileSize * 23.5, this.tileSize * 6, 45, 1.9, Math.PI / 2)
+            new RotatingObstacle(this.tileSize * 15.5, this.tileSize * 12, 45, 0.8, 0),
+            new RotatingObstacle(this.tileSize * 19, this.tileSize * 8, 40, -0.9, Math.PI),
         ];
         
         // Meta final
@@ -299,7 +298,7 @@ export class Level3 {
         }
         
         // Plataforma elevada para la caja (arriba a la izquierda) - UN BLOQUE MENOS
-        for (let x = 1; x <= 4; x++) tiles[10][x] = 1;
+        for (let x = 1; x <= 3.5; x++) tiles[9][x] = 1;
         
         // Plataforma de inicio para Blue (base) - UN BLOQUE MÁS ABAJO
         for (let x = 16; x <= 18; x++) tiles[15][x] = 1;
@@ -821,7 +820,7 @@ export class Level3 {
         this.playerRed.canDash = true;
         
         this.boxes = [
-            new Box(this.tileSize * 2, this.tileSize * 8, "red")
+            new Box(this.tileSize * 2.5, this.tileSize * 8, "red")
         ];
         
         this.fuentesActivated = false;
@@ -841,11 +840,10 @@ export class Level3 {
             mp.time = (Math.PI / 4) * index;
         });
         
-        // Reiniciar obstáculos giratorios
+        // Reiniciar obstáculos giratorios - MUY LENTOS
         this.rotatingObstacles = [
-            new RotatingObstacle(this.tileSize * 17.5, this.tileSize * 12, 45, 1.8, 0),
-            new RotatingObstacle(this.tileSize * 21, this.tileSize * 8, 40, -2.0, Math.PI),
-            new RotatingObstacle(this.tileSize * 23.5, this.tileSize * 6, 45, 1.9, Math.PI / 2)
+            new RotatingObstacle(this.tileSize * 15.5, this.tileSize * 12, 45, 0.8, 0),
+            new RotatingObstacle(this.tileSize * 19, this.tileSize * 8, 40, -0.9, Math.PI),
         ];
         
         this.sparks = [];
