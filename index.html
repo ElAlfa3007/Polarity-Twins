@@ -52,5 +52,66 @@
 
     <canvas id="game" width="1080" height="720"></canvas>
     <script type="module" src="./main.js"></script>
+    
+    <!-- Service Worker Registration & PWA Support -->
+    <script>
+      // Registrar Service Worker mejorado
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./net/service-worker.js', {
+            scope: '/'
+          })
+            .then(registration => {
+              console.log('✓ Service Worker registrado exitosamente');
+              console.log('[PWA] Versión:', registration.scope);
+              
+              // Detectar actualizaciones
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'activated') {
+                    console.log('✓ Nueva versión de SW activada - Recarga la página');
+                    // Opcional: mostrar notificación al usuario
+                  }
+                });
+              });
+              
+              // Permitir skip waiting
+              if (registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            })
+            .catch(err => {
+              console.warn('✗ Error registrando Service Worker:', err);
+              console.warn('[PWA] El juego funcionará pero sin soporte offline');
+            });
+        });
+        
+        // Escuchar mensajes del SW
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('✓ Service Worker actualizado');
+        });
+      } else {
+        console.warn('[PWA] Service Worker no soportado en este navegador');
+      }
+      
+      // Detectar instalación como PWA
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('✓ PWA instalable detectada');
+      });
+      
+      // Detectar si está instalado
+      window.addEventListener('appinstalled', () => {
+        console.log('✓ PWA instalada como aplicación nativa');
+      });
+      
+      // Detectar modo standalone (instalado)
+      if (window.navigator.standalone === true) {
+        console.log('✓ Ejecutándose en modo standalone (PWA instalada)');
+      }
+    </script>
   </body>
 </html>
